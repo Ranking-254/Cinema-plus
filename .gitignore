@@ -1,0 +1,47 @@
+# =========================
+# Global (Applies to all folders)
+# =========================
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Environment Variables (CRITICAL DO NOT TOUCH)
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Backend Specific 
+# =========================
+backend/node_modules/
+backend/logs/
+backend/coverage/
+
+# =========================
+# Frontend Specific (seatsync-frontend)
+# =========================
+seatsync-frontend/node_modules/
+seatsync-frontend/dist/
+seatsync-frontend/.vite/
+seatsync-frontend/coverage/
+
+# =========================
+# Deployment
+# =========================
+.vercel/

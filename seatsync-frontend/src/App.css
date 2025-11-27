@@ -1,0 +1,303 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+:root {
+  --color-bg: #1a1b26;
+  --color-stage: #7aa2f7;
+  --color-seat-avail: #9ece6a; /* Nice Green */
+  --color-seat-held: #e0af68;  /* Gold/Orange */
+  --color-seat-sold: #f7768e;  /* Soft Red */
+  --color-text: #c0caf5;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Update .container to handle large screens better */
+.container {
+  width: 100%;         /* Take full width available */
+  max-width: 1000px;   /* Increased from 800px to give it more breathing room */
+  margin: 0 auto;      /* This is the magic "Center Me" command */
+  text-align: center;
+  padding: 40px 20px;
+  padding-bottom: 120px;
+}
+
+
+/* 🎭 THE CINEMA STAGE EFFECT */
+.stage-container {
+  perspective: 1000px; /* 3D Effect */
+  margin-bottom: 60px;
+}
+
+.stage {
+  background: linear-gradient(to bottom, var(--color-stage), transparent);
+  height: 60px;
+  width: 80%;
+  margin: 0 auto;
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0; /* Curved top */
+  box-shadow: 0 -20px 60px -10px var(--color-stage); /* Glow */
+  transform: rotateX(-30deg) scale(0.8);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: white;
+  text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+/* 💺 THE SEAT GRID */
+.seat-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 12px;
+  justify-content: center;
+  margin-top: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 🪑 CHAIR SHAPE */
+.seat {
+  width: 40px;
+  height: 35px;
+  border: none;
+  border-radius: 8px 8px 12px 12px; /* Top rounded, bottom slightly squared */
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  color: rgba(255,255,255,0.9);
+}
+
+/* Armrests effect using shadow */
+.seat::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: -2px;
+  right: -2px;
+  height: 8px;
+  background-color: inherit;
+  border-radius: 4px;
+  z-index: -1;
+  filter: brightness(0.8);
+}
+
+.seat:hover:not(:disabled) {
+  transform: translateY(-5px) scale(1.1);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.4);
+  z-index: 2;
+}
+
+.seat:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* 🎨 STATUS COLORS */
+.seat.AVAILABLE {
+  background-color: var(--color-seat-avail);
+}
+
+.seat.HELD {
+  background-color: var(--color-seat-held);
+  animation: pulse 2s infinite;
+}
+
+.seat.SOLD {
+  background-color: var(--color-seat-sold);
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* LEGEND */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot.available { background-color: var(--color-seat-avail); }
+.dot.held { background-color: var(--color-seat-held); }
+.dot.sold { background-color: var(--color-seat-sold); }
+
+/* 💳 CHECKOUT BAR */
+.checkout-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: rgba(26, 27, 38, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px 30px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  color: white;
+}
+
+.checkout-info h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
+.checkout-info p { margin: 0; color: #a9b1d6; }
+.checkout-info small { display: block; margin-top: 5px; color: var(--color-seat-held); font-weight: bold; }
+
+.btn-pay {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  transition: transform 0.2s;
+}
+
+.btn-pay:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4); }
+
+.btn-cancel {
+  background: transparent;
+  color: #ff5555;
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cancel:hover { background: rgba(255, 85, 85, 0.1); }
+
+@keyframes slideUp {
+  from { transform: translate(-50%, 100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+/* Ensure the Navbar goes edge-to-edge */
+nav {
+  width: 100%;         /* Force full width */
+  background-color: rgba(26, 27, 38, 0.9) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  color: white !important;
+  /* Add box-sizing to prevent scrolling issues */
+  box-sizing: border-box; 
+}
+.btn-primary {
+  background-color: var(--color-stage);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: #1a1b26;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* SKELETON LOADING */
+.skeleton-seat {
+  width: 40px;
+  height: 35px;
+  background: #2a2b3d; /* Dark grey base */
+  border-radius: 8px 8px 12px 12px;
+  /* The Shimmer Gradient */
+  background-image: linear-gradient(
+    90deg, 
+    #2a2b3d 0px, 
+    #3b3e54 40px, 
+    #2a2b3d 80px
+  ); 
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% { background-position: -100px 0; }
+  100% { background-position: 100px 0; }
+}
+
+/* MOBILE RESPONSIVENESS */
+
+/* 1. The Scroll Wrapper */
+.seat-map-overflow {
+  width: 100%;
+  overflow-x: auto; /* Allows side-scrolling */
+  padding-bottom: 20px; /* Space for scrollbar */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  display: flex; /* Centers the grid if it's smaller than screen */
+  justify-content: center; 
+}
+
+/* Ensure the grid doesn't shrink */
+.seat-grid {
+  min-width: 500px; /* Force minimum width so seats stay big */
+  margin-top: 20px;
+  padding: 0 20px; /* Side padding inside scroll */
+}
+
+/* 2. Media Queries for Phones */
+@media (max-width: 600px) {
+  .container {
+    padding: 20px 10px; /* Less padding on edges */
+    padding-bottom: 140px; /* More space for checkout bar */
+  }
+
+  .stage {
+    width: 95%; /* Wider stage on mobile */
+  }
+
+  .checkout-bar {
+    width: 95%; /* Make bar almost full width */
+    flex-direction: column; /* Stack text and buttons */
+    gap: 15px;
+    padding: 15px;
+    text-align: center;
+  }
+  
+  .checkout-bar div[style] {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-pay, .btn-cancel {
+    width: 100%; /* Full width buttons are easier to tap */
+    padding: 15px;
+  }
+}
+
+
+
+
+ 
+
