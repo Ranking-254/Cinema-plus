@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '@clerk/clerk-react';
 import { toast } from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../config'
 
 const AdminPage = () => {
   const { getToken } = useAuth();
@@ -20,7 +21,7 @@ const AdminPage = () => {
       const token = await getToken();
       
       // 2. Call the Backend
-      await axios.post('http://localhost:5000/api/seats/reset', {}, {
+      await axios.post(`${API_URL}/api/seats/reset`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

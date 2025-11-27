@@ -3,23 +3,64 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth, useUser } from '@clerk/clerk-react'; 
-import SeatMap from '../components/SeatMap'; // Path updated to ../
-import '../App.css'; // Path updated to ../
+import SeatMap from '../components/SeatMap';
+import '../App.css';
+import { API_URL } from '../config';
 
-const EVENT_ID = '6927492381eed11ec27fe623'; // Your Event ID
-const socket = io('http://localhost:5000');
+// Initialize socket connection
+const socket = io(API_URL);
 
 const BookingPage = () => {
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
+  // We store the Event ID in state now, not a constant
+  const [currentEventId, setCurrentEventId] = useState(null);
+
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser(); 
 
-  // 1. Fetch Seats & Listen for Updates
+  // 1. INITIALIZATION: Find the Event ID first
   useEffect(() => {
+    const fetchEventId = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/events`);
+        
+        if (response.data.data && response.data.data.length > 0) {
+          // Use the first event found in the DB
+          setCurrentEventId(response.data.data[0]._id);
+        } else {
+          toast.error("No events found in database!");
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Initialization Error:", error);
+        toast.error("Failed to connect to server");
+        setLoading(false);
+      }
+    };
+
+    fetchEventId();
+  }, []);
+
+  // 2. FETCH SEATS: Runs only after we have an Event ID
+  useEffect(() => {
+    if (!currentEventId) return; // Wait for ID
+
+    const fetchSeats = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/seats/event/${currentEventId}`);
+        setSeats(response.data.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching seats:", error);
+        toast.error("Failed to load map");
+        setLoading(false);
+      }
+    };
+
     fetchSeats();
 
-    // Listen for single seat updates
+    // Socket Listeners
     socket.on('seat_updated', (updatedSeat) => {
       setSeats((currentSeats) => 
         currentSeats.map((seat) => 
@@ -28,7 +69,6 @@ const BookingPage = () => {
       );
     });
 
-    // ⚡ NEW: Listen for Admin Reset
     socket.on('events_reset', (freshSeats) => {
       toast("Event was reset by Admin!", { icon: '⚠️' });
       setSeats(freshSeats);
@@ -38,33 +78,21 @@ const BookingPage = () => {
       socket.off('seat_updated');
       socket.off('events_reset');
     };
-  }, []);
+  }, [currentEventId]); // Dependency ensures this runs when ID is found
 
-  const fetchSeats = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/api/seats/event/${EVENT_ID}`);
-      setSeats(response.data.data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching seats:", error);
-      toast.error("Failed to load map");
-      setLoading(false);
-    }
-  };
-
-  // 2. Logic: Find the seat *I* am currently holding
+  // 3. Logic: Find the seat *I* am currently holding
   const myHeldSeat = seats.find(
     (seat) => seat.status === 'HELD' && seat.userId === user?.id
   );
 
-  // 3. Handle HOLD
+  // 4. Handle HOLD
   const handleSeatClick = async (seat) => {
     if (!isSignedIn) return toast.error("Please sign in first");
     if (myHeldSeat) return toast.error("You can only hold one seat at a time!");
 
     try {
       const token = await getToken();
-      await axios.post('http://localhost:5000/api/seats/hold', 
+      await axios.post(`${API_URL}/api/seats/hold`, 
         { seatId: seat._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -74,7 +102,7 @@ const BookingPage = () => {
     }
   };
 
-  // 4. Handle BOOK (Pay)
+  // 5. Handle BOOK (Pay)
   const handlePayClick = async () => {
     if (!myHeldSeat) return;
 
@@ -82,7 +110,7 @@ const BookingPage = () => {
 
     try {
       const token = await getToken();
-      await axios.post('http://localhost:5000/api/seats/book', 
+      await axios.post(`${API_URL}/api/seats/book`, 
         { seatId: myHeldSeat._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -96,13 +124,13 @@ const BookingPage = () => {
     }
   };
 
-  // 5. Handle CANCEL (Release)
+  // 6. Handle CANCEL (Release)
   const handleCancelClick = async () => {
     if (!myHeldSeat) return;
 
     try {
       const token = await getToken();
-      await axios.post('http://localhost:5000/api/seats/release', 
+      await axios.post(`${API_URL}/api/seats/release`, 
         { seatId: myHeldSeat._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
