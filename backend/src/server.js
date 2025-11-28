@@ -14,8 +14,13 @@ const server = http.createServer(app);
 // 4. Attach Socket.io to the server
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173", // Allow your Frontend
+       origin: [
+            "http://localhost:5173",                  // Your local machine
+            "https://cinema-plus-black.vercel.app",   // Your Vercel App (Check exact URL!)
+            "https://cinema-plus-git-main-ranking-254s-projects.vercel.app" // (Optional: Vercel preview URLs)
+        ],
         methods: ["GET", "POST"]
+        
     }
 });
 
