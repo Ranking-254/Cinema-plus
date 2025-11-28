@@ -297,6 +297,109 @@ nav {
 }
 
 
+/* 1. The Scroll Wrapper */
+.seat-map-overflow {
+  width: 100%;
+  overflow-x: auto; /* Allows side-scrolling */
+  padding-bottom: 20px; /* Space for scrollbar */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  display: flex; /* Centers the grid if it's smaller than screen */
+  justify-content: center; 
+}
+
+/* Ensure the grid doesn't shrink */
+.seat-grid {
+  min-width: 500px; /* Force minimum width so seats stay big */
+  margin-top: 20px;
+  padding: 0 20px; /* Side padding inside scroll */
+}
+
+/* 2. Media Queries for Phones */
+@media (max-width: 600px) {
+  .container {
+    padding: 20px 10px; /* Less padding on edges */
+    padding-bottom: 140px; /* More space for checkout bar */
+  }
+
+  .stage {
+    width: 95%; /* Wider stage on mobile */
+  }
+
+  .checkout-bar {
+    width: 95%; /* Make bar almost full width */
+    flex-direction: column; /* Stack text and buttons */
+    gap: 15px;
+    padding: 15px;
+    text-align: center;
+  }
+  
+  .checkout-bar div[style] {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-pay, .btn-cancel {
+    width: 100%; /* Full width buttons are easier to tap */
+    padding: 15px;
+  }
+}
+/* --- MOBILE RESPONSIVENESS END --- */
+
+/* --- MOBILE RESPONSIVENESS (UPDATED) --- */
+
+@media (max-width: 768px) {
+  /* 1. Fix the Container Padding */
+  .container {
+    padding: 20px 15px;
+    padding-bottom: 100px;
+  }
+
+  /* 2. Shrink the Hero Text */
+  section h1 {
+    font-size: 2.2rem !important; /* Smaller title */
+    line-height: 1.2;
+  }
+  
+  section p {
+    font-size: 1rem !important;
+    padding: 0 10px;
+  }
+
+  /* 3. Fix the Navbar Layout */
+  nav {
+    padding: 1rem !important; /* Less padding */
+  }
+
+  /* Hide the text links on mobile to save space */
+  /* (Users can still click the Logo for Home or 'Get Tickets' for Booking) */
+  nav .nav-links {
+    display: none !important;
+  }
+
+  /* Ensure Logo stays on one line */
+  nav h2 {
+    font-size: 1.2rem;
+    white-space: nowrap; /* Prevent wrapping */
+  }
+}
+
+* Make the grid wider so seats have room to breathe */
+  .seat-grid {
+    min-width: 600px; /* Increased from 500px -> 600px */
+    gap: 15px; /* Increased gap from default 12px */
+    padding: 0 20px;
+    margin-top: 30px;
+  }
+
+  /* Make individual seats bigger and easier to tap */
+  .seat {
+    width: 45px;  /* Increased from 40px */
+    height: 40px; /* Increased from 35px */
+    font-size: 0.9rem; /* Larger text */
+    border-radius: 10px 10px 14px 14px; /* Slightly rounder */
+  }
+
+
 
 
  
