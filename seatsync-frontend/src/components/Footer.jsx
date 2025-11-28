@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'; // <--- 1. Import Link
+
 const Footer = () => {
   return (
     <footer style={styles.footer}>
@@ -10,30 +12,30 @@ const Footer = () => {
         
         <div style={styles.column}>
           <h4>Links</h4>
-          <a href="/" style={styles.link}>Home</a>
-          <a href="/about" style={styles.link}>About</a>
-          <a href="/book" style={styles.link}>Book Now</a>
+          <Link to="/" style={styles.link}>Home</Link>
+          <Link to="/about" style={styles.link}>About</Link>
+          <Link to="/book" style={styles.link}>Book Now</Link>
         </div>
 
         <div style={styles.column}>
           <h4>Contact</h4>
           <a
-  href="mailto:support@cinemaplus+.com"
-  style={styles.contactLink}
-  onMouseEnter={(e) => (e.target.style.color = '#7aa2f7')}
-  onMouseLeave={(e) => (e.target.style.color = '#a9b1d6')}
->
-  support@cinemaplus+.com
-</a>
+            href="mailto:support@cinemaplus+.com"
+            style={styles.contactLink}
+            onMouseEnter={(e) => (e.target.style.color = '#7aa2f7')}
+            onMouseLeave={(e) => (e.target.style.color = '#a9b1d6')}
+          >
+            support@cinemaplus+.com
+          </a>
 
-<a
-  href="tel:+254716700151"
-  style={styles.contactLink}
-  onMouseEnter={(e) => (e.target.style.color = '#7aa2f7')}
-  onMouseLeave={(e) => (e.target.style.color = '#a9b1d6')}
->
-  +254 716700151
-</a>
+          <a
+            href="tel:+254716700151"
+            style={styles.contactLink}
+            onMouseEnter={(e) => (e.target.style.color = '#7aa2f7')}
+            onMouseLeave={(e) => (e.target.style.color = '#a9b1d6')}
+          >
+            +254 716700151
+          </a>
 
         </div>
       </div>
@@ -68,7 +70,14 @@ const styles = {
   link: {
     color: '#7aa2f7',
     textDecoration: 'none',
-    transition: 'color 0.2s'
+    transition: 'color 0.2s',
+    cursor: 'pointer'
+  },
+  contactLink: {
+    color: '#a9b1d6',
+    textDecoration: 'none',
+    transition: 'color 0.2s',
+    cursor: 'pointer'
   },
   copy: {
     textAlign: 'center',
