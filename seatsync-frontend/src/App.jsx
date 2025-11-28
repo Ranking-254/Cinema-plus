@@ -6,6 +6,7 @@ import BookingPage from './pages/Bookingpage';
 import AdminPage from './pages/Adminpage';
 import LandingPage from './pages/LandingPage'; // Import Landing
 import AboutPage from './pages/AboutPage';     // Import About
+import Events from './pages/Events';
 import './App.css';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/book" element={<BookingPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/events" element={<Events />} />
         </Routes>
 
         <Footer />

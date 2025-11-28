@@ -17,7 +17,7 @@ exports.getEventSeats = async (req, res) => {
   }
 };
 
-// 2. HOLD SEAT (The one we are debugging)
+// 2. HOLD SEAT 
 exports.holdSeat = async (req, res) => {
   console.log("👉 1. Request reached Controller!"); 
 
@@ -123,26 +123,26 @@ exports.releaseSeat = async (req, res) => {
 // 4. ADMIN RESET
 exports.resetEvent = async (req, res) => {
   try {
-    // 1. DEFINE IDs
-    // ⚠️ Replace with your actual Clerk User ID
     const ADMIN_ID = "user_361z8x8l7bdaJlqKO9rP5LbCZYB"; 
-    
-    // ⚠️ Replace with your Event ID from MongoDB
-    const eventId = "6927492381eed11ec27fe623"; 
 
-    // 2. SECURITY CHECK (The most important part!)
-    // If the person asking is NOT the admin, stop them.
     if (req.auth.userId !== ADMIN_ID) {
       return res.status(403).json({ message: "Nice try! Admins only." });
     }
 
-    // 3. RESET LOGIC
-    await seatService.resetAllSeats(eventId);
+    // 1. NUKE EVERYTHING (No ID needed anymore)
+    await seatService.resetAllSeats();
 
-    // 4. REAL-TIME SIGNAL
-    const freshSeats = await seatService.getSeatsByEventId(eventId);
-    const io = req.app.get('io');
-    io.emit('events_reset', freshSeats);
+    // 2. Fetch fresh seats to update the live map
+    // We need an event ID to fetch the data to send back. 
+    // Since we reset EVERYTHING, we can just fetch the seats for the *first* event found.
+    const events = await require('../services/event.service').getAllEvents();
+    if (events.length > 0) {
+        const freshSeats = await seatService.getSeatsByEventId(events[0]._id);
+        
+        // Broadcast the update
+        const io = req.app.get('io');
+        io.emit('events_reset', freshSeats);
+    }
 
     res.status(200).json({ 
       status: 'success', 

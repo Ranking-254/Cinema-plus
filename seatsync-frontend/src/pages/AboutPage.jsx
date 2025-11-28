@@ -46,7 +46,7 @@ const AboutPage = () => {
             <li>📍 Venue: Nairobi <span style={{ color: "#d9dbe0ff" }}>🌀Cinema </span> plus+ Hub</li>
             <li>🎟 Total Seats: 50</li>
             <li>👨‍💻 Focus: Modern MERN techniques, insights, networking, and hands-on knowledge sharing.</li>
-            <li>💻 Registration: <a href="/book" target="_blank" rel="noopener noreferrer" style={{ color: '#7aa2f7' }}>Register Now</a></li>
+            <li>💻 Registration: <a href="/book" target="_blank" rel="noopener noreferrer" style={{ color: '#7aa2f7' }}>Book Ticket Now</a></li>
           </ul>
         </div>
       </div>

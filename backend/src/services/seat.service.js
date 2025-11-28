@@ -86,8 +86,8 @@ exports.releaseSeat = async (seatId, userId) => {
 exports.resetAllSeats = async (eventId) => {
   // UpdateMany finds ALL matching documents and updates them at once
   const result = await Seat.updateMany(
-    { event: eventId }, 
-    { 
+    {},
+      { 
       $set: { 
         status: 'AVAILABLE', 
         userId: null, 

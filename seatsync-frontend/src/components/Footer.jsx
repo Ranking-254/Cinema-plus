@@ -15,6 +15,7 @@ const Footer = () => {
           <Link to="/" style={styles.link}>Home</Link>
           <Link to="/about" style={styles.link}>About</Link>
           <Link to="/book" style={styles.link}>Book Now</Link>
+          <Link to="/events" style={styles.link}>Events</Link>
         </div>
 
         <div style={styles.column}>
@@ -40,7 +41,7 @@ const Footer = () => {
         </div>
       </div>
       <div style={styles.copy}>
-        &copy; {new Date().getFullYear()} SeatSync. All rights reserved.
+        &copy; {new Date().getFullYear()} 🌀 Cinema <span style={{ color: "#7aa2f7" }}>plus+</span>. All rights reserved.
       </div>
     </footer>
   );
