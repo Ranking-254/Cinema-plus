@@ -21,7 +21,7 @@ const Footer = () => {
         <div style={styles.column}>
           <h4>Contact</h4>
           <a
-            href="mailto:support@cinemaplus+.com"
+            href="mailto:cinemaplus.help@gmail.com"
             style={styles.contactLink}
             onMouseEnter={(e) => (e.target.style.color = '#7aa2f7')}
             onMouseLeave={(e) => (e.target.style.color = '#a9b1d6')}
