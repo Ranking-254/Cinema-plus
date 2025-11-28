@@ -17,7 +17,8 @@ const io = new Server(server, {
        origin: [
             "http://localhost:5173",                  // Your local machine
             "https://cinema-plus-black.vercel.app",   // Your Vercel App (Check exact URL!)
-            "https://cinema-plus-git-main-ranking-254s-projects.vercel.app" // (Optional: Vercel preview URLs)
+            "https://cinema-plus-git-main-ranking-254s-projects.vercel.app", // (Optional: Vercel preview URLs)
+             "https://cinema-plus-delta.vercel.app"
         ],
         methods: ["GET", "POST"]
         
