@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://cinema-plus-delta.vercel.app/sitemap.xml
