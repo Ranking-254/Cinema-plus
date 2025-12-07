@@ -8,6 +8,7 @@ import LandingPage from './pages/LandingPage'; // Import Landing
 import AboutPage from './pages/AboutPage';     // Import About
 import Events from './pages/Events';
 import './App.css';
+import InstallButton from './components/InstallButton';
 
 function App() {
   return (
@@ -17,13 +18,16 @@ function App() {
         
         <Navbar />
         <Toaster position="top-center" reverseOrder={false} />
-        
+
+          <InstallButton /> {/* <--- Add it here */}
+
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/book" element={<BookingPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/events" element={<Events />} />
+        
         </Routes>
 
         <Footer />
