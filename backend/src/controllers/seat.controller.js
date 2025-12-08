@@ -4,13 +4,15 @@ const nodemailer = require('nodemailer');
 // 📧 CONFIGURATION: SETUP EMAIL TRANSPORTER
 // Place this at the top so it's ready to use
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
-    user: 'cinemaplus.help@gmail.com', // ⚠️ REPLACE WITH YOUR GMAIL
-    pass: 'bjhoctupkpenimut' // ⚠️ REPLACE WITH YOUR 16-CHAR APP PASSWORD
+    // 👇 Change this to use process.env
+    user: process.env.GMAIL_USER, 
+    pass: process.env.GMAIL_PASS  
   }
 });
-
 // 1. GET ALL SEATS
 exports.getEventSeats = async (req, res) => {
   try {

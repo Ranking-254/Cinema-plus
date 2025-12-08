@@ -16,6 +16,7 @@ const Footer = () => {
           <Link to="/about" style={styles.link}>About</Link>
           <Link to="/book" style={styles.link}>Book Now</Link>
           <Link to="/events" style={styles.link}>Events</Link>
+          <Link to="/my-tickets" style={styles.link}>My Tickets</Link>
         </div>
 
         <div style={styles.column}>
