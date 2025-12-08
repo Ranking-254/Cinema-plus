@@ -58,6 +58,10 @@ npm run dev
 
 🧪 How to Test
 
+# Here is a live website url fell free to check it out 👇👇
+[Live Website](https://cinema-plus-delta.vercel.app)
+
+
 Open http://localhost:5173.
 
 Log in (Google/Email).
