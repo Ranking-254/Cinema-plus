@@ -1,14 +1,35 @@
+/* 1. IMPORT TAILWIND (Must be first) */
+@import "tailwindcss";
+
+/* 2. IMPORT FONTS */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
+/* 3. TAILWIND V4 THEME CONFIG */
+@theme {
+  /* We manually define these as HEX to prevent the 'oklch' error */
+  --color-neutral-900: #1a1b26;
+  --color-neutral-800: #262626; /* Add this */
+  --color-neutral-700: #404040; /* Add this */
+  --color-neutral-600: #525252; /* Add this */
+  --color-neutral-500: #737373;
+  --color-neutral-400: #a3a3a3; /* Add this */
+  --color-neutral-300: #d4d4d4;
+  
+  --color-orange-500: #f97316;
+  
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
+}
+/* 4. CUSTOM VARIABLES */
 :root {
   --color-bg: #1a1b26;
   --color-stage: #7aa2f7;
-  --color-seat-avail: #9ece6a; /* Nice Green */
-  --color-seat-held: #e0af68;  /* Gold/Orange */
-  --color-seat-sold: #f7768e;  /* Soft Red */
+  --color-seat-avail: #9ece6a;
+  --color-seat-held: #e0af68;
+  --color-seat-sold: #f7768e;
   --color-text: #c0caf5;
 }
 
+/* 5. GLOBAL STYLES */
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -17,20 +38,20 @@ body {
   min-height: 100vh;
 }
 
-/* Update .container to handle large screens better */
+/* --- CINEMA PLUS STYLES --- */
+
 .container {
-  width: 100%;         /* Take full width available */
-  max-width: 1000px;   /* Increased from 800px to give it more breathing room */
-  margin: 0 auto;      /* This is the magic "Center Me" command */
+  width: 100%;        
+  max-width: 1000px;  
+  margin: 0 auto;     
   text-align: center;
   padding: 40px 20px;
   padding-bottom: 120px;
 }
 
-
-/* 🎭 THE CINEMA STAGE EFFECT */
+/* 🎭 STAGE */
 .stage-container {
-  perspective: 1000px; /* 3D Effect */
+  perspective: 1000px;
   margin-bottom: 60px;
 }
 
@@ -39,8 +60,8 @@ body {
   height: 60px;
   width: 80%;
   margin: 0 auto;
-  border-radius: 50% 50% 0 0 / 20px 20px 0 0; /* Curved top */
-  box-shadow: 0 -20px 60px -10px var(--color-stage); /* Glow */
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+  box-shadow: 0 -20px 60px -10px var(--color-stage);
   transform: rotateX(-30deg) scale(0.8);
   opacity: 0.5;
   display: flex;
@@ -52,34 +73,42 @@ body {
   text-shadow: 0 0 10px rgba(255,255,255,0.5);
 }
 
-/* 💺 THE SEAT GRID */
+/* 💺 SEAT GRID */
+.seat-map-overflow {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 20px;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  justify-content: center; 
+}
+
 .seat-grid {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
-  gap: 12px;
-  justify-content: center;
-  margin-top: 40px;
-  max-width: 600px;
+  min-width: 600px; 
+  gap: 15px;       
+  padding: 0 20px;
+  margin-top: 30px;
   margin-left: auto;
   margin-right: auto;
 }
 
-/* 🪑 CHAIR SHAPE */
+/* 🪑 SEATS */
 .seat {
-  width: 40px;
-  height: 35px;
+  width: 45px;
+  height: 40px;
+  font-size: 0.9rem;
   border: none;
-  border-radius: 8px 8px 12px 12px; /* Top rounded, bottom slightly squared */
+  border-radius: 10px 10px 14px 14px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.8rem;
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   color: rgba(255,255,255,0.9);
 }
 
-/* Armrests effect using shadow */
 .seat::after {
   content: '';
   position: absolute;
@@ -103,22 +132,10 @@ body {
   transform: scale(0.95);
 }
 
-/* 🎨 STATUS COLORS */
-.seat.AVAILABLE {
-  background-color: var(--color-seat-avail);
-}
-
-.seat.HELD {
-  background-color: var(--color-seat-held);
-  animation: pulse 2s infinite;
-}
-
-.seat.SOLD {
-  background-color: var(--color-seat-sold);
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none;
-}
+/* STATUS COLORS */
+.seat.AVAILABLE { background-color: var(--color-seat-avail); }
+.seat.HELD { background-color: var(--color-seat-held); animation: pulse 2s infinite; }
+.seat.SOLD { background-color: var(--color-seat-sold); opacity: 0.6; cursor: not-allowed; box-shadow: none; }
 
 /* LEGEND */
 .legend {
@@ -127,7 +144,6 @@ body {
   gap: 30px;
   margin-bottom: 40px;
 }
-
 .legend-item {
   display: flex;
   align-items: center;
@@ -135,12 +151,7 @@ body {
   font-size: 0.9rem;
   color: var(--color-text);
 }
-
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
+.dot { width: 12px; height: 12px; border-radius: 50%; }
 .dot.available { background-color: var(--color-seat-avail); }
 .dot.held { background-color: var(--color-seat-held); }
 .dot.sold { background-color: var(--color-seat-sold); }
@@ -164,6 +175,7 @@ body {
   align-items: center;
   animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   color: white;
+  z-index: 40;
 }
 
 .checkout-info h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
@@ -196,23 +208,18 @@ body {
 }
 .btn-cancel:hover { background: rgba(255, 85, 85, 0.1); }
 
-@keyframes slideUp {
-  from { transform: translate(-50%, 100%); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
-}
+/* KEYFRAMES */
+@keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+@keyframes pulse { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } 100% { transform: scale(1); filter: brightness(1); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { background-position: -100px 0; } 100% { background-position: 100px 0; } }
 
-@keyframes pulse {
-  0% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.05); filter: brightness(1.2); }
-  100% { transform: scale(1); filter: brightness(1); }
-}
-/* Ensure the Navbar goes edge-to-edge */
+/* NAVBAR & UTILS */
 nav {
-  width: 100%;         /* Force full width */
+  width: 100%;
   background-color: rgba(26, 27, 38, 0.9) !important;
   border-bottom: 1px solid rgba(255,255,255,0.05) !important;
   color: white !important;
-  /* Add box-sizing to prevent scrolling issues */
   box-sizing: border-box; 
 }
 .btn-primary {
@@ -225,182 +232,45 @@ nav {
   cursor: pointer;
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
 /* SKELETON LOADING */
 .skeleton-seat {
-  width: 40px;
-  height: 35px;
-  background: #2a2b3d; /* Dark grey base */
-  border-radius: 8px 8px 12px 12px;
-  /* The Shimmer Gradient */
-  background-image: linear-gradient(
-    90deg, 
-    #2a2b3d 0px, 
-    #3b3e54 40px, 
-    #2a2b3d 80px
-  ); 
+  width: 45px;
+  height: 40px;
+  background: #2a2b3d;
+  border-radius: 10px 10px 14px 14px;
+  background-image: linear-gradient(90deg, #2a2b3d 0px, #3b3e54 40px, #2a2b3d 80px); 
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite linear;
 }
 
-@keyframes shimmer {
-  0% { background-position: -100px 0; }
-  100% { background-position: 100px 0; }
-}
-
-/* MOBILE RESPONSIVENESS */
-
-/* 1. The Scroll Wrapper */
-.seat-map-overflow {
-  width: 100%;
-  overflow-x: auto; /* Allows side-scrolling */
-  padding-bottom: 20px; /* Space for scrollbar */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  display: flex; /* Centers the grid if it's smaller than screen */
-  justify-content: center; 
-}
-
-/* Ensure the grid doesn't shrink */
-.seat-grid {
-  min-width: 500px; /* Force minimum width so seats stay big */
-  margin-top: 20px;
-  padding: 0 20px; /* Side padding inside scroll */
-}
-
-/* 2. Media Queries for Phones */
+/* 📱 MOBILE RESPONSIVENESS */
 @media (max-width: 600px) {
   .container {
-    padding: 20px 10px; /* Less padding on edges */
-    padding-bottom: 140px; /* More space for checkout bar */
+    padding: 20px 10px;
+    padding-bottom: 140px;
   }
-
-  .stage {
-    width: 95%; /* Wider stage on mobile */
-  }
-
+  .stage { width: 95%; }
+  
   .checkout-bar {
-    width: 95%; /* Make bar almost full width */
-    flex-direction: column; /* Stack text and buttons */
+    width: 95%;
+    flex-direction: column;
     gap: 15px;
     padding: 15px;
     text-align: center;
   }
-  
-  .checkout-bar div[style] {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .btn-pay, .btn-cancel {
-    width: 100%; /* Full width buttons are easier to tap */
-    padding: 15px;
-  }
+  .checkout-bar div[style] { width: 100%; justify-content: center; }
+  .btn-pay, .btn-cancel { width: 100%; padding: 15px; }
 }
-
-
-/* 1. The Scroll Wrapper */
-.seat-map-overflow {
-  width: 100%;
-  overflow-x: auto; /* Allows side-scrolling */
-  padding-bottom: 20px; /* Space for scrollbar */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-  display: flex; /* Centers the grid if it's smaller than screen */
-  justify-content: center; 
-}
-
-/* Ensure the grid doesn't shrink */
-.seat-grid {
-  min-width: 500px; /* Force minimum width so seats stay big */
-  margin-top: 20px;
-  padding: 0 20px; /* Side padding inside scroll */
-}
-
-/* 2. Media Queries for Phones */
-@media (max-width: 600px) {
-  .container {
-    padding: 20px 10px; /* Less padding on edges */
-    padding-bottom: 140px; /* More space for checkout bar */
-  }
-
-  .stage {
-    width: 95%; /* Wider stage on mobile */
-  }
-
-  .checkout-bar {
-    width: 95%; /* Make bar almost full width */
-    flex-direction: column; /* Stack text and buttons */
-    gap: 15px;
-    padding: 15px;
-    text-align: center;
-  }
-  
-  .checkout-bar div[style] {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .btn-pay, .btn-cancel {
-    width: 100%; /* Full width buttons are easier to tap */
-    padding: 15px;
-  }
-}
-/* --- MOBILE RESPONSIVENESS END --- */
-
-/* --- MOBILE RESPONSIVENESS (UPDATED) --- */
 
 @media (max-width: 768px) {
-  /* 1. Fix the Container Padding */
-  .container {
-    padding: 20px 15px;
-    padding-bottom: 100px;
-  }
-
-  /* 2. Shrink the Hero Text */
-  section h1 {
-    font-size: 2.2rem !important; /* Smaller title */
-    line-height: 1.2;
-  }
-  
-  section p {
-    font-size: 1rem !important;
-    padding: 0 10px;
-  }
-
-  /* 3. Fix the Navbar Layout */
-  nav {
-    padding: 1rem !important; /* Less padding */
-  }
-
-  /* Hide the text links on mobile to save space */
-  /* (Users can still click the Logo for Home or 'Get Tickets' for Booking) */
-  nav .nav-links {
-    display: none !important;
-  }
-
-  /* Ensure Logo stays on one line */
-  nav h2 {
-    font-size: 1.2rem;
-    white-space: nowrap; /* Prevent wrapping */
-  }
+  .container { padding: 20px 15px; padding-bottom: 100px; }
+  section h1 { font-size: 2.2rem !important; line-height: 1.2; }
+  section p { font-size: 1rem !important; padding: 0 10px; }
+  nav { padding: 1rem !important; }
+  nav .nav-links { display: none !important; }
+  nav h2 { font-size: 1.2rem; white-space: nowrap; }
 }
-
-* Make the grid wider so seats have room to breathe */
-  .seat-grid {
-    min-width: 600px; /* Increased from 500px -> 600px */
-    gap: 15px; /* Increased gap from default 12px */
-    padding: 0 20px;
-    margin-top: 30px;
-  }
-
-  /* Make individual seats bigger and easier to tap */
-  .seat {
-    width: 45px;  /* Increased from 40px */
-    height: 40px; /* Increased from 35px */
-    font-size: 0.9rem; /* Larger text */
-    border-radius: 10px 10px 14px 14px; /* Slightly rounder */
-  }
-
-
-
-
- 
-

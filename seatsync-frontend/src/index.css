@@ -1,25 +1,42 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/*
+/* --- 1. Tailwind v4 Import 
+@import "tailwindcss";
+
+/* --- 2. Your Custom Theme Config (v4 Style) --- 
+/* In v4, we configure the theme directly in CSS! 
+@theme {
+  --color-neutral-900: #171717;
+  --color-neutral-500: #737373;
+  --color-neutral-300: #d4d4d4;
+  --color-orange-500: #f97316;
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+  
+  --animate-fade-in: fadeIn 0.5s ease-out forwards;
 }
 
-/* RESET EVERYTHING */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* --- 3. Custom Keyframes --- 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Make sure the app takes full width */
-body, #root {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  display: block; /* Vite sometimes sets this to flex/grid, which breaks things */
-}
+/* --- 4. Global Resets & Styles --- */
+/* We use @layer base to tap into Tailwind's reset layer 
+@layer base {
+  :root {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    font-weight: 400;
+  }
 
-
-
-
+  body, #root {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: block;
+    background-color: var(--color-neutral-900);
+    color: white;
+  }
+}*/ 

@@ -96,5 +96,12 @@ exports.resetAllSeats = async (eventId) => {
       } 
     }
   );
+// services/seat.service.js
+
+exports.getUserTickets = async (userId) => {
+  // Find seats that are SOLD and belong to this user
+  return await Seat.find({ userId: userId, status: 'SOLD' });
+};
+
   return result;
 };

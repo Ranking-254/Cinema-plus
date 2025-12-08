@@ -8,7 +8,9 @@ import LandingPage from './pages/LandingPage'; // Import Landing
 import AboutPage from './pages/AboutPage';     // Import About
 import Events from './pages/Events';
 import './App.css';
+import './index.css'
 import InstallButton from './components/InstallButton';
+import MyTickets from './pages/MyTickets';
 
 function App() {
   return (
@@ -27,6 +29,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/my-tickets" element={<MyTickets />} />
         
         </Routes>
 

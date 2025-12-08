@@ -19,6 +19,9 @@ const Navbar = () => {
           <Link to="/book" style={styles.link}>Book Tickets</Link>
           <Link to="/about" style={styles.link}>About</Link>
           <Link to="/events" style={styles.link}>Events</Link>
+          <Link to="/my-tickets" className="hover:text-orange-500 transition">
+  My Tickets
+</Link>
           
           {user?.id === ADMIN_ID && (
             <Link to="/admin" style={{ ...styles.link, color: '#ff4444' }}>Admin</Link>

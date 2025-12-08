@@ -13,5 +13,7 @@ router.post('/hold', requireAuth, seatController.holdSeat);
 router.post('/book', requireAuth, seatController.bookSeat);
 router.post('/release', requireAuth, seatController.releaseSeat)
 router.post('/reset', requireAuth, seatController.resetEvent);
+// routes/seats.js
+router.get('/mine', requireAuth, seatController.getMyTickets);
 
 module.exports = router;
