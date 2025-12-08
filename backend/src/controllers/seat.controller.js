@@ -10,14 +10,8 @@ const transporter = nodemailer.createTransport({
     user: process.env.GMAIL_USER, 
     pass: process.env.GMAIL_PASS  
   },
-  // 👇 CRITICAL FIXES FOR RENDER 👇
-  tls: {
-    rejectUnauthorized: false, // Helps with some SSL handshake issues
-    ciphers: "SSLv3"
-  },
-  family: 4, // 🛑 FORCE IPv4 (Fixes ETIMEDOUT on Render)
-  connectionTimeout: 10000, 
-  greetingTimeout: 5000
+  // 👇 Hii ndio muhimu sana kwa Render (IPv4)
+  family: 4, 
 });
 
 // 1. GET ALL SEATS
