@@ -3,15 +3,16 @@ const nodemailer = require('nodemailer');
 
 // 📧 CONFIGURATION: SETUP EMAIL TRANSPORTER
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  service: 'gmail', // 👈 Let Nodemailer handle the Port/Host/Secure logic
   auth: {
     user: process.env.GMAIL_USER, 
     pass: process.env.GMAIL_PASS  
   },
-  // 👇 Hii ndio muhimu sana kwa Render (IPv4)
-  family: 4, 
+  family: 4, // 🛑 Keep this! We still need to force IPv4 for Render.
+  
+  // Keep timeouts so it doesn't freeze if it fails
+  connectionTimeout: 10000, 
+  greetingTimeout: 5000 
 });
 
 // 1. GET ALL SEATS
