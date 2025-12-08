@@ -3,8 +3,11 @@ import { io } from 'socket.io-client';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth, useUser } from '@clerk/clerk-react'; 
+// 👇 1. Import EmailJS
+import emailjs from '@emailjs/browser';
+
 import SeatMap from '../components/SeatMap';
-import Modal from '../components/Modal'; // Make sure you created this file!
+import Modal from '../components/Modal'; 
 import TicketForm from '../components/TicketForm';
 import GeneratedTicket from '../components/GeneratedTicket';
 import '../App.css';
@@ -19,8 +22,8 @@ const BookingPage = () => {
   const [currentEventId, setCurrentEventId] = useState(null);
   
   // New State for the Ticket Logic
-  const [ticketData, setTicketData] = useState(null); // Stores the final ticket to show
-  const [isBooking, setIsBooking] = useState(false); // Loading state for payment
+  const [ticketData, setTicketData] = useState(null); 
+  const [isBooking, setIsBooking] = useState(false); 
 
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser(); 
@@ -77,7 +80,7 @@ const BookingPage = () => {
     socket.on('events_reset', (freshSeats) => {
       toast("Event was reset by Admin!", { icon: '⚠️' });
       setSeats(freshSeats);
-      setTicketData(null); // Reset local ticket state if admin resets
+      setTicketData(null); 
     });
 
     return () => {
@@ -95,7 +98,6 @@ const BookingPage = () => {
   const handleSeatClick = async (seat) => {
     if (!isSignedIn) return toast.error("Please sign in first");
     
-    // If we already have a ticket shown, clear it to start over
     if (ticketData) setTicketData(null);
     
     if (myHeldSeat) return toast.error("You can only hold one seat at a time!");
@@ -106,16 +108,13 @@ const BookingPage = () => {
         { seatId: seat._id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Note: We don't need to manually open the modal.
-      // The socket will update 'seats', 'myHeldSeat' will become true, 
-      // and the Modal below will automatically appear.
       toast.success("Seat Held! Complete the form to book.");
     } catch (error) {
       toast.error(error.response?.data?.message || "Hold failed");
     }
   };
 
-  // 5. Handle FORM SUBMIT (Book the seat)
+  // 5. Handle FORM SUBMIT (Book the seat + Send Email)
   const handleBookingSubmit = async (formData) => {
     if (!myHeldSeat) return;
 
@@ -125,23 +124,44 @@ const BookingPage = () => {
     try {
       const token = await getToken();
       
-      // Call your backend to finalize the booking
+      // A. Call Backend (Save to DB Only)
+      // We removed the backend email logic, so this just marks it "SOLD"
       await axios.post(`${API_URL}/api/seats/book`, 
         { 
-          // 1. The Seat ID (for the database)
           seatId: myHeldSeat._id,
-          
-          // 2. The User Details (for the Email!) 📧
+          // We still send these just in case you want to save them in DB later
           email: formData.email, 
           fullName: formData.fullName,
-          
-          // 3. Ticket Details
           movie: "Avengers: Secret Wars", 
           price: myHeldSeat.price 
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
+      // B. Send Email via EmailJS (Frontend) 🚀
+      try {
+        const serviceID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+        const templateID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+        const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+        const emailParams = {
+            to_name: formData.fullName,
+            to_email: formData.email, // Ensure your EmailJS template uses {{to_email}}
+            movie: "Avengers: Secret Wars",
+            seat: `${myHeldSeat.row}${myHeldSeat.number}`,
+            price: myHeldSeat.price
+        };
+
+        // Send email without blocking the UI (fire and forget)
+        await emailjs.send(serviceID, templateID, emailParams, publicKey);
+        console.log("✅ Email sent successfully via EmailJS!");
+        
+      } catch (emailError) {
+        console.error("❌ EmailJS Failed:", emailError);
+        // We don't stop the booking if email fails, just log it
+      }
+
+      // C. Success UI
       toast.dismiss(toastId);
       toast.success("Booking Successful!");
 
@@ -164,20 +184,14 @@ const BookingPage = () => {
   };
 
   // 6. Handle CANCEL (Release)
-  // This is called if they close the modal or click cancel
   const handleCancelClick = async () => {
-    // 1. FIRST check if we are just viewing a ticket. 
-    // If yes, close it and stop here. We don't need to release anything.
     if (ticketData) {
         setTicketData(null); 
         return;
     }
 
-    // 2. NOW check if we hold a seat.
-    // If we don't hold a seat, we can't release one, so we stop.
     if (!myHeldSeat) return;
 
-    // 3. If we made it here, release the held seat.
     try {
       const token = await getToken();
       await axios.post(`${API_URL}/api/seats/release`, 
@@ -189,9 +203,9 @@ const BookingPage = () => {
       console.error("Release failed", error);
     }
   };
+
   return (
     <>
-
       <div className="container">
         <SeatMap 
           seats={seats} 
@@ -200,15 +214,11 @@ const BookingPage = () => {
         />
       </div>
 
-      {/* --- THE NEW MODAL SYSTEM --- */}
-      {/* Open Modal if I am holding a seat OR if I have a generated ticket to show */}
       <Modal isOpen={!!myHeldSeat || !!ticketData} onClose={handleCancelClick}>
         
-        {/* VIEW 1: SHOW THE TICKET (Success State) */}
         {ticketData ? (
            <GeneratedTicket data={ticketData} />
         ) : (
-           /* VIEW 2: SHOW THE FORM (Booking State) */
            myHeldSeat && (
              <TicketForm 
                selectedSeat={`${myHeldSeat.row}${myHeldSeat.number}`}

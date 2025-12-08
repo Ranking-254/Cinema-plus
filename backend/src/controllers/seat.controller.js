@@ -1,19 +1,4 @@
 const seatService = require('../services/seat.service');
-const nodemailer = require('nodemailer');
-
-// 📧 CONFIGURATION: SETUP EMAIL TRANSPORTER
-const transporter = nodemailer.createTransport({
-  service: 'gmail', // 👈 Let Nodemailer handle the Port/Host/Secure logic
-  auth: {
-    user: process.env.GMAIL_USER, 
-    pass: process.env.GMAIL_PASS  
-  },
-  family: 4, // 🛑 Keep this! We still need to force IPv4 for Render.
-  
-  // Keep timeouts so it doesn't freeze if it fails
-  connectionTimeout: 10000, 
-  greetingTimeout: 5000 
-});
 
 // 1. GET ALL SEATS
 exports.getEventSeats = async (req, res) => {
@@ -34,12 +19,10 @@ exports.getEventSeats = async (req, res) => {
 
 // 2. HOLD SEAT 
 exports.holdSeat = async (req, res) => {
-  console.log("👉 1. Request reached Controller!"); 
-
   try {
     const { seatId } = req.body;
     
-    // Check if Clerk Auth worked
+    // Check Auth
     if (!req.auth || !req.auth.userId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
@@ -67,15 +50,16 @@ exports.holdSeat = async (req, res) => {
     res.status(200).json({ status: 'success', data: seat });
 
   } catch (error) {
-    console.error("💥 CRITICAL ERROR in holdSeat:", error);
+    console.error("💥 Error in holdSeat:", error);
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
 
-// 3. BOOK SEAT (With Email Debugging)
+// 3. BOOK SEAT (Database Only - No Email)
 exports.bookSeat = async (req, res) => {
   try {
-    const { seatId, email, fullName, movie, price } = req.body;
+    // We only need seatId here. Email is handled by Frontend now.
+    const { seatId } = req.body;
     const userId = req.auth.userId;
 
     // 1. Book the seat in DB
@@ -92,46 +76,10 @@ exports.bookSeat = async (req, res) => {
     const io = req.app.get('io');
     io.emit('seat_updated', seat);
 
-    // 3. SEND EMAIL (DEBUG MODE: AWAIT IT!)
-    if (email) {
-      try {
-        console.log(`Attempting to send email to ${email}...`);
-        
-        await transporter.sendMail({
-          from: '"Cinema Plus" <' + process.env.GMAIL_USER + '>', 
-          to: email,
-          subject: `Your Ticket for ${movie || 'Cinema Plus'}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; background: #1a1b26; color: white; padding: 30px; border-radius: 10px; max-width: 500px;">
-                <h2 style="color: #f97316;">Booking Confirmed! 🍿</h2>
-                <p>Hi ${fullName},</p>
-                <div style="background: #2a2b3d; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p><strong>Movie:</strong> ${movie || 'Cinema Plus Event'}</p>
-                    <p><strong>Seat:</strong> ${seat.row}${seat.number}</p>
-                    <p><strong>Price:</strong> $${price}</p>
-                </div>
-                <p style="color: #737373; font-size: 12px;">Cinema Plus • Austin, TX</p>
-            </div>
-          `
-        });
-        
-        console.log("✅ Email sent successfully!");
-        
-      } catch (emailError) {
-        console.error("❌ EMAIL FAILED:", emailError);
-        // We return an error so the frontend knows exactly why it failed
-        return res.status(500).json({ 
-            status: 'error', 
-            message: 'Booking saved, but Email Failed!', 
-            details: emailError.message 
-        });
-      }
-    }
-
-    // 4. Success Response
+    // 3. Success Response
     res.status(200).json({
       status: 'success',
-      message: 'Payment verified. Seat confirmed & Email sent!',
+      message: 'Payment verified & Seat confirmed!',
       data: seat
     });
 
