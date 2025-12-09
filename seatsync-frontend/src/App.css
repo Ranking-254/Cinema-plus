@@ -15,7 +15,7 @@
   --color-neutral-400: #a3a3a3; /* Add this */
   --color-neutral-300: #d4d4d4;
   
-  --color-orange-500: #f97316;
+  --color-orange-500: #f97316;/*.....*/
   
   --animate-fade-in: fadeIn 0.5s ease-out forwards;
 }
