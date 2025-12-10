@@ -8,8 +8,25 @@ import img6 from '../assets/img6.webp';
 import img7 from '../assets/img7.webp';
 import img0 from '../assets/img0.webp';
 import img3 from '../assets/img3.webp';
+import img from '../assets/img.webp';
 
 const events = [
+
+   {
+    id: 0,
+    title: "Avengers: secret Wars Premiere",
+    date: "Dec 10 2025",
+    image: img,
+    category: "Special Event"
+  },
+
+  {
+    id: 1,
+    title: "Avengers: Endgame Premiere",
+    date: "December 14 2025",
+    image: img3,
+    category: "Premiere"
+  },
   {
     id: 0,
     title: "The ultimate meetup for MERN developers.",
@@ -17,13 +34,7 @@ const events = [
     image: img0,
     category: "Premiere"
   },
-  {
-    id: 1,
-    title: "Avengers: Endgame Premiere",
-    date: "April 2019",
-    image: img3,
-    category: "Premiere"
-  },
+
   {
     id: 2,
     title: "Genesis Tech Conference",

@@ -13,10 +13,12 @@ const Footer = () => {
         <div style={styles.column}>
           <h4>Links</h4>
           <Link to="/" style={styles.link}>Home</Link>
-          <Link to="/about" style={styles.link}>About</Link>
           <Link to="/book" style={styles.link}>Book Now</Link>
           <Link to="/events" style={styles.link}>Events</Link>
+          <Link to="/gallery" style={styles.link}>Gallery</Link>
           <Link to="/my-tickets" style={styles.link}>My Tickets</Link>
+          <Link to="/about" style={styles.link}>About</Link>
+          
         </div>
 
         <div style={styles.column}>

@@ -72,7 +72,7 @@ const MyTicketsPage = () => {
                       movie: "Avengers: Secret Wars", 
                       seat: `${ticket.row}${ticket.number}`,
                       price: ticket.price,
-                      date: "Oct 25, 2025",
+                      date: "Dec 10, 2025",
                       // Use real data from Clerk if available
                       fullName: user?.fullName || "Guest User",
                       email: user?.primaryEmailAddress?.emailAddress,

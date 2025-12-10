@@ -22,10 +22,10 @@ const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Book Tickets", path: "/book" }, // Or "/" depending on your routes
-    { name: "About", path: "/about" },
     { name: "Events", path: "/events" },
     { name: "Gallery", path: "/gallery" },
     { name: "My Tickets", path: "/my-tickets" },
+     { name: "About", path: "/about" },
   ];
 
   return (
