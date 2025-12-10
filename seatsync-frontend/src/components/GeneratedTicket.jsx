@@ -1,12 +1,10 @@
 import React, { useRef } from 'react'; 
-import html2canvas from 'html2canvas-pro'; // Keeping the Pro version
-import QRCode from 'react-qr-code'; // 1. New Import
+import html2canvas from 'html2canvas-pro'; 
+import QRCode from 'react-qr-code'; 
 
 export default function GeneratedTicket({ data, compact = false }) {
   const ticketRef = useRef(null);
 
-  // Create unique data for the QR (e.g., ticket ID + email)
-  // In a real app, this would be a validation URL
   const qrData = `TICKET-${data.seat}-${data.email || 'guest'}`;
 
   const handleDownload = async () => {
@@ -43,7 +41,8 @@ export default function GeneratedTicket({ data, compact = false }) {
       
       {/* Header Text */}
       {!compact && (
-        <div className="mb-6 mt-2">
+        /* FIX: Added mb-8 to push ticket down */
+        <div className="mb-7 mt-2">
             <h2 className="text-2xl md:text-5xl font-bold mb-2 leading-tight text-white">
             Enjoy the show, <br className="md:hidden"/>
             <span className="text-gradient">{data.fullName}!</span>
@@ -61,7 +60,8 @@ export default function GeneratedTicket({ data, compact = false }) {
       <div 
         id="ticket-visual"
         ref={ticketRef} 
-        className={`relative w-full ${compact ? '' : 'max-w-[500px] mx-auto'} transform hover:scale-[1.01] transition duration-500`}
+        /* FIX: Added my-4 for vertical breathing room */
+        className={`relative w-full ${compact ? '' : 'max-w-[500px] mx-auto'} my-5 transform hover:scale-[1.01] transition duration-500`}
       >
         <img 
           src="/assets/images/pattern-ticket.svg" 
@@ -79,7 +79,11 @@ export default function GeneratedTicket({ data, compact = false }) {
                </div>
                
                <div className="min-w-0 flex flex-col justify-center">
-                 <h3 className="font-bold text-[15px] md:text-l tracking-wide uppercase leading-tight text-white truncate pr-2">
+                 {/* FONT SIZE FIX: 
+                     1. Changed text-[15px] -> text-sm (Smaller on mobile)
+                     2. Changed md:text-l -> md:text-xl (Corrected typo for desktop)
+                 */}
+                 <h3 className="font-bold text-[11px] md:text-xl tracking-wide uppercase leading-tight text-white truncate pr-2">
                    {data.movie}
                  </h3>
                  <p className="text-xs md:text-sm text-neutral-400 mt-1">
@@ -88,7 +92,7 @@ export default function GeneratedTicket({ data, compact = false }) {
                </div>
              </div>
 
-             <div className="flex flex-col gap-2 md:mt-4">
+             <div className="flex flex-col gap-2 mt-0.5 md:mt-4">
                 <div className="flex items-center gap-3">
                    <img src={data.avatarPreview} className="w-10 h-10 md:w-12 md:h-12 rounded-lg object-cover border border-neutral-600 bg-neutral-800" alt="User" />
                    <div className="min-w-0">
@@ -108,22 +112,18 @@ export default function GeneratedTicket({ data, compact = false }) {
              </div>
           </div>
 
-          {/* Right Side - UPDATED WITH QR CODE */}
-          {/* Changed width to w-[80px] mobile / w-[100px] desktop to fit QR */}
-          <div className="w-[80px] md:w-[100px] flex flex-col items-center justify-center h-full ml-2 border-l border-white/10 border-dashed gap-3 md:gap-4">
-             
-             {/* Seat Number (Rotated) */}
+          {/* Right Side */}
+          <div className="w-[80px] md:w-[100px] flex flex-col items-center justify-center h-full ml-2 border-l border-white/10 border-dashed gap-3 md:gap-4">             
              <div className="rotate-90 text-center whitespace-nowrap">
                 <span className="block text-[10px] md:text-xs tracking-widest uppercase mb-1 text-neutral-500">SEAT</span>
                 <span className="block text-xl md:text-2xl font-mono font-bold text-white">{data.seat}</span>
              </div>
 
-             {/* QR Code Box */}
              <div className="bg-white p-1 md:p-1.5 rounded-md shadow-sm opacity-90">
                  <QRCode 
                     value={qrData} 
-                    size={compact ? 48 : 56} /* Adjust size based on mode */
-                    className="w-full h-auto" /* Ensures it scales with container */
+                    size={compact ? 48 : 56} 
+                    className="w-full h-auto"
                  />
              </div>
 
@@ -134,10 +134,11 @@ export default function GeneratedTicket({ data, compact = false }) {
       {/* Button */}
       <button 
         onClick={handleDownload}
+        /* FIX: Increased top margin to mt-8 */
         className={`
             ${compact 
                 ? 'mt-4 py-2 px-6 text-sm bg-neutral-800 border-neutral-700 text-neutral-300 w-full md:w-auto md:px-10 md:hover:bg-neutral-700' 
-                : 'mt-6 py-3 px-8 text-base bg-white text-black shadow-lg shadow-orange-500/20 w-full md:w-auto'}
+                : 'mt-8 py-3 px-8 text-base bg-white text-black shadow-lg shadow-orange-500/20 w-full md:w-auto'}
             font-bold rounded-lg border flex items-center justify-center gap-2 transition hover:bg-opacity-90
         `}
       >
