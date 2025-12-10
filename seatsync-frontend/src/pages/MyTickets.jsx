@@ -1,89 +1,85 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react'; // Added useUser for real avatar
+import GeneratedTicket from '../components/GeneratedTicket';
 import { API_URL } from '../config';
 
-export default function MyTickets() {
+const MyTicketsPage = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const { getToken, isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { user } = useUser(); // Get user data for the ticket visual
 
   useEffect(() => {
     const fetchTickets = async () => {
-      if (!isSignedIn) return;
-      
+      if (!isSignedIn) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const token = await getToken();
-        const res = await axios.get(`${API_URL}/api/seats/mine`, {
+        const response = await axios.get(`${API_URL}/api/seats/mine`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setTickets(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch tickets", err);
+
+        setTickets(response.data.data);
+      } catch (error) {
+        console.error("Failed to fetch tickets", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTickets();
-  }, [isSignedIn]);
+  }, [isSignedIn, getToken]);
 
-  if (loading) return <div className="text-white text-center mt-20">Loading your wallet...</div>;
+  if (loading) return <div className="text-white text-center pt-24 animate-pulse">Loading tickets...</div>;
+
+  if (!isSignedIn) return (
+    <div className="text-white text-center pt-32 px-4">
+        <h2 className="text-2xl font-bold mb-4">Please Sign In</h2>
+        <p className="text-gray-400">You need to be logged in to view your tickets.</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white p-6 pt-24">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-2">My Ticket Wallet</h1>
-        <p className="text-neutral-400 mb-10">See all your upcoming and past shows.</p>
-
+    // FIX 1: Reduced mobile padding (px-4) so tickets have full width
+    <div className="min-h-screen bg-[#0f1014] px-4 md:px-8 pt-24 pb-12">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 text-center">My Tickets</h1>
+        <p className="text-gray-400 text-center mb-10">See you at the movies</p>
+        
         {tickets.length === 0 ? (
-          <div className="text-center py-20 bg-white/5 rounded-2xl border border-neutral-800">
-             <p className="text-xl text-neutral-500">You haven't booked any tickets yet.</p>
-             <a href="/book" className="inline-block mt-4 text-orange-500 hover:text-orange-400 font-bold">
-               Go to Cinema &rarr;
-             </a>
-          </div>
+          <p className="text-gray-400 text-center py-10">You haven't booked any tickets yet.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          // FIX 2: Responsive Grid (1 col mobile, 2 col tablet, 3 col desktop)
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
             {tickets.map((ticket) => (
               <div 
                 key={ticket._id} 
-                className="relative bg-neutral-800 border border-neutral-700 rounded-2xl overflow-hidden hover:border-orange-500/50 transition group"
+                // FIX 3: Removed h-[250px]. Use h-auto so content fits.
+                // Added flex to center the ticket in its column
+                className="relative w-full h-auto flex flex-col items-center transform hover:scale-[1.02] transition-transform duration-300"
               >
-                {/* Visual "Stub" Effect (Left Border) */}
-                <div className="absolute left-0 top-0 bottom-0 w-2 bg-orange-500"></div>
-
-                <div className="p-6 pl-8 flex justify-between items-center">
-                  <div>
-                    <h3 className="text-xl font-bold text-white mb-1">Avengers: Secret Wars</h3>
-                    <p className="text-neutral-400 text-sm">Oct 25, 2025 • Cinema Plus</p>
-                    
-                    <div className="mt-4 flex items-center gap-3">
-                       <span className="bg-neutral-900 text-neutral-300 px-3 py-1 rounded text-xs border border-neutral-700">
-                         {user?.fullName || "Guest"}
-                       </span>
-                       <span className="text-green-400 text-xs flex items-center gap-1">
-                         ● Confirmed
-                       </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                     <span className="block text-neutral-500 text-xs uppercase tracking-widest mb-1">SEAT</span>
-                     <span className="block text-4xl font-mono font-bold text-orange-500">
-                       {ticket.row}{ticket.number}
-                     </span>
-                     <span className="block text-neutral-500 text-xs mt-1">${ticket.price}</span>
-                  </div>
-                </div>
-
-                {/* Optional: "Download" Action Area */}
-                <div className="bg-black/20 p-3 text-center border-t border-white/5">
-                   <span className="text-xs text-neutral-500 group-hover:text-white transition">
-                      View details to download
-                   </span>
-                </div>
+                 {/* FIX 4: Pass 'compact={true}' 
+                    This tells GeneratedTicket to hide the "Enjoy the show" header 
+                    so the list looks clean.
+                 */}
+                 <GeneratedTicket 
+                    compact={true} 
+                    data={{
+                      movie: "Avengers: Secret Wars", 
+                      seat: `${ticket.row}${ticket.number}`,
+                      price: ticket.price,
+                      date: "Oct 25, 2025",
+                      // Use real data from Clerk if available
+                      fullName: user?.fullName || "Guest User",
+                      email: user?.primaryEmailAddress?.emailAddress,
+                      avatarPreview: user?.imageUrl || "/assets/images/image-avatar.jpg",
+                      github: user?.username ? `@${user.username}` : "@cinema_fan"
+                    }} 
+                 />
               </div>
             ))}
           </div>
@@ -91,4 +87,6 @@ export default function MyTickets() {
       </div>
     </div>
   );
-}
+};
+
+export default MyTicketsPage;

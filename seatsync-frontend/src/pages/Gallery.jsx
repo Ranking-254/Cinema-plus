@@ -1,50 +1,75 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import img2 from '../assets/img2.webp';
+import img1 from '../assets/img1.webp';
+import img4 from '../assets/img4.webp';
+import img5 from '../assets/img5.webp';
+import img6 from '../assets/img6.webp';
+import img7 from '../assets/img7.webp';
+import img0 from '../assets/img0.webp';
+import img3 from '../assets/img3.webp';
 
 const events = [
+  {
+    id: 0,
+    title: "The ultimate meetup for MERN developers.",
+    date: "December 15 2025",
+    image: img0,
+    category: "Premiere"
+  },
   {
     id: 1,
     title: "Avengers: Endgame Premiere",
     date: "April 2019",
-    image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop",
+    image: img3,
     category: "Premiere"
   },
   {
     id: 2,
-    title: "Cinema Under the Stars",
-    date: "July 2023",
-    image: "https://images.unsplash.com/photo-1513106580091-1d82408b8cd8?q=80&w=1000&auto=format&fit=crop",
-    category: "Outdoor"
+    title: "Genesis Tech Conference",
+    date: "July 2025",
+    image: img2,
+    category: "Tech Event"
   },
   {
     id: 3,
     title: "Oppenheimer IMAX Experience",
     date: "Aug 2023",
-    image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000&auto=format&fit=crop",
+    image: img4,
     category: "IMAX"
   },
   {
     id: 4,
     title: "Classic Horror Marathon",
-    date: "Oct 2022",
-    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e63?q=80&w=1000&auto=format&fit=crop",
+    date: "Oct 2025",
+    image: img5,
     category: "Special Event"
   },
   {
     id: 5,
     title: "Dune: Part Two Early Access",
     date: "Feb 2024",
-    image: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=1000&auto=format&fit=crop",
+    image: img6,
     category: "Premiere"
   },
   {
     id: 6,
     title: "Kids Animation Festival",
     date: "Dec 2023",
-    image: "https://images.unsplash.com/photo-1595769816263-9b910be24d5f?q=80&w=1000&auto=format&fit=crop",
+    image: img7,
     category: "Family"
+  },
+  {
+    id: 7,
+    title: "Ledership for Tomorrow Summit",
+    date: "Dec 2025",
+    image: img1,
+    category: "premiere"
   }
 ];
+
+
+
 
 const GalleryPage = () => {
   return (

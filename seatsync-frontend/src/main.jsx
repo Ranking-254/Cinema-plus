@@ -5,7 +5,7 @@ import './index.css'
 import { ClerkProvider } from '@clerk/clerk-react'
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
-// Import key from .env
+// Rudisha hivi:
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 if (!PUBLISHABLE_KEY) {

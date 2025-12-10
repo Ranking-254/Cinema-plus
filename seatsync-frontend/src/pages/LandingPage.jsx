@@ -34,6 +34,7 @@ const LandingPage = () => {
           Just you and the big screen.
         </p>
         
+        
         <Link to="/book">
           <button className="btn-pay" style={{ fontSize: '1.2rem', padding: '15px 40px' }}>
             Get Tickets 🎟️
@@ -54,6 +55,10 @@ const LandingPage = () => {
         <div style={cardStyle}>
           <h2>📱 Mobile First</h2>
           <p>Book from your phone, tablet, or desktop.</p>
+        </div>
+         <div style={cardStyle}>
+          <h2>🎫 Ticket generation</h2>
+          <p>With full detail,downloadable,sent directly to email and QRcode.</p>
         </div>
       </section>
 

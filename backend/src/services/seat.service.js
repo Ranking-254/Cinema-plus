@@ -1,5 +1,6 @@
 const Seat = require('../models/Seat');
 
+// 1. GET ALL SEATS
 exports.getSeatsByEventId = async (eventId) => {
   // Find all seats for this event
   // .sort({ row: 1, number: 1 }) ensures they come out in order: A1, A2, B1...
@@ -8,18 +9,12 @@ exports.getSeatsByEventId = async (eventId) => {
   return seats;
 };
 
-
-//hii iko responsible for hold 
-
+// 2. HOLD SEAT
 exports.holdSeat = async (seatId, userId) => {
-  
-  // 1. Calculate expiration time (10 mins from now)
-  const holdDuration = 10 *60* 1000; // 10 minutes in ms///currently set for 10 seconds for development
+  // 10 minutes hold time
+  const holdDuration = 10 * 60 * 1000; 
   const expiresAt = new Date(Date.now() + holdDuration);
 
-  // 2. The Atomic Operation
-  // We search for the seat by ID *AND* check that status is 'AVAILABLE'
-  // If the status is already 'HELD' or 'SOLD', this finds nothing and returns null.
   const updatedSeat = await Seat.findOneAndUpdate(
     { _id: seatId, status: 'AVAILABLE' }, // Filter
     { 
@@ -29,31 +24,25 @@ exports.holdSeat = async (seatId, userId) => {
         holdExpiresAt: expiresAt 
       } 
     },
-    { new: true } // Return the updated document, not the old one
+    { new: true }
   );
 
   return updatedSeat;
 };
 
-//hii inaangalia kama umelipa dio itoke from hold to sold
+// 3. BOOK SEAT (Payment Confirmed)
 exports.bookSeat = async (seatId, userId) => {
-  // Logic: 
-  // 1. Find the seat
-  // 2. MUST be status 'HELD'
-  // 3. MUST be held by THIS user
-  // 4. MUST NOT be expired (holdExpiresAt > Now)
-  
   const seat = await Seat.findOneAndUpdate(
     { 
       _id: seatId, 
       status: 'HELD',
       userId: userId,
-      holdExpiresAt: { $gt: new Date() } // $gt means "Greater Than" (future)
+      holdExpiresAt: { $gt: new Date() } // Must not be expired
     },
     { 
       $set: { 
         status: 'SOLD',
-        holdExpiresAt: null // Clear the timer, it's theirs forever now
+        holdExpiresAt: null // Clear timer
       } 
     },
     { new: true }
@@ -62,7 +51,7 @@ exports.bookSeat = async (seatId, userId) => {
   return seat;
 };
 
-//release seat
+// 4. RELEASE SEAT
 exports.releaseSeat = async (seatId, userId) => {
   const seat = await Seat.findOneAndUpdate(
     { 
@@ -82,9 +71,8 @@ exports.releaseSeat = async (seatId, userId) => {
   return seat;
 };
 
-// 4. RESET THEATER (Admin)
-exports.resetAllSeats = async (eventId) => {
-  // UpdateMany finds ALL matching documents and updates them at once
+// 5. RESET THEATER (Admin)
+exports.resetAllSeats = async () => {
   const result = await Seat.updateMany(
     {},
       { 
@@ -96,12 +84,12 @@ exports.resetAllSeats = async (eventId) => {
       } 
     }
   );
-// services/seat.service.js
-
-exports.getUserTickets = async (userId) => {
-  // Find seats that are SOLD and belong to this user
-  return await Seat.find({ userId: userId, status: 'SOLD' });
+  return result;
 };
 
-  return result;
+// 6. GET USER TICKETS (Hii ilikuwa imejificha, sasa iko nje!) ✅
+exports.getUserTickets = async (userId) => {
+  // Find seats that are SOLD and belong to this user
+  const tickets = await Seat.find({ userId: userId, status: 'SOLD' });
+  return tickets;
 };

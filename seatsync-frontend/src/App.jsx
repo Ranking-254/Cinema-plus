@@ -7,6 +7,7 @@ import AdminPage from './pages/Adminpage';
 import LandingPage from './pages/LandingPage'; // Import Landing
 import AboutPage from './pages/AboutPage';     // Import About
 import Events from './pages/Events';
+import GalleryPage from './pages/Gallery';
 import './App.css';
 import './index.css'
 import InstallButton from './components/InstallButton';
@@ -30,7 +31,9 @@ function App() {
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/events" element={<Events />} />
           <Route path="/my-tickets" element={<MyTickets />} />
-        
+          <Route path="/gallery" element={<GalleryPage />} />
+
+          {/* Add other routes as needed */}        
         </Routes>
 
         <Footer />
