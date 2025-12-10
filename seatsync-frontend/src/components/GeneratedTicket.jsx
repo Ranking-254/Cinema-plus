@@ -83,7 +83,7 @@ export default function GeneratedTicket({ data, compact = false }) {
                      1. Changed text-[15px] -> text-sm (Smaller on mobile)
                      2. Changed md:text-l -> md:text-xl (Corrected typo for desktop)
                  */}
-                 <h3 className="font-bold text-[11px] md:text-xl tracking-wide uppercase leading-tight text-white truncate pr-2">
+                 <h3 className="font-bold text-[11px] md:text-[16px] tracking-wide uppercase leading-tight text-white truncate pr-2">
                    {data.movie}
                  </h3>
                  <p className="text-xs md:text-sm text-neutral-400 mt-1">
