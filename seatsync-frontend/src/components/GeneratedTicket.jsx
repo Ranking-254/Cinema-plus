@@ -50,7 +50,7 @@ export default function GeneratedTicket({ data, compact = false }) {
             <p className="text-base md:text-xl max-w-md mx-auto text-neutral-300">
             Your ticket for <span className="text-orange-500 font-bold">{data.movie}</span> is confirmed.
             </p>
-            <p className="hidden md:block max-w-md mx-auto mt-2 text-sm text-neutral-400">
+            <p className="max-w-md mx-auto mt-2 text-sm text-neutral-400">
             We've emailed a copy to <span className="text-white">{data.email}</span>.
             </p>
         </div>
