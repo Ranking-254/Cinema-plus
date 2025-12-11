@@ -106,7 +106,7 @@ export default function GeneratedTicket({ data, compact = false }) {
                 
                 <div className="mt-1">
                      <span className="inline-flex items-center px-2 py-1 rounded bg-black/40 border border-orange-500/20 text-[10px] md:text-xs font-mono text-orange-400">
-                       ADMIT ONE • ${data.price}
+                       ADMIT ONE • KES{data.price}
                      </span>
                 </div>
              </div>
