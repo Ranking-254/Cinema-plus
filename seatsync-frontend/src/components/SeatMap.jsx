@@ -7,7 +7,7 @@ const SeatMap = ({ seats, onSeatClick, loading }) => {
     return (
       <div className="stage-container">
         <div className="legend" style={{ opacity: 0.5 }}>
-           <div className="legend-item">Loading map...</div>
+           <div className="legend-item">Loading Seats,Please wait...</div>
         </div>
         <div className="stage">SCREEN / STAGE</div>
         
