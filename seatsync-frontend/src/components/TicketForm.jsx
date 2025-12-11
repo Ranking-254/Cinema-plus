@@ -76,7 +76,7 @@ export default function TicketForm({ onSubmit, selectedSeat, movieTitle, price }
            <div className="flex items-center justify-center gap-4 text-orange-400 font-mono text-sm">
              <span className="bg-orange-500/20 px-2 py-1 rounded">SEAT: {selectedSeat}</span>
              <span>•</span>
-             <span>TOTAL: ${price}</span>
+             <span>TOTAL: KES{price}</span>
            </div>
         </div>
       )}
@@ -191,7 +191,7 @@ export default function TicketForm({ onSubmit, selectedSeat, movieTitle, price }
         className="w-full bg-orange-500 text-neutral-900 font-extrabold text-lg py-4 rounded-lg hover:bg-orange-700 transition shadow-[0_4px_0_hsl(7,71%,60%)] hover:shadow-none hover:translate-y-[4px] active:translate-y-[4px]"
       >
         {/* Dynamic Button Text */}
-        {selectedSeat ? `Pay & Generate Ticket ($${price})` : "Generate My Ticket"}
+        {selectedSeat ? `Pay & Generate Ticket (KES ${price})` : "Generate My Ticket"}
       </button>
     </form>
   );
