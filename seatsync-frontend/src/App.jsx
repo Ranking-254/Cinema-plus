@@ -1,43 +1,56 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/Navbar';
-import Footer from './components/Footer'; // Import Footer
+import Footer from './components/Footer'; 
 import BookingPage from './pages/Bookingpage';
 import AdminPage from './pages/Adminpage';
-import LandingPage from './pages/LandingPage'; // Import Landing
-import AboutPage from './pages/AboutPage';     // Import About
+import EventAnalytics from './pages/EventAnalytics';
+import ScannerMode from './pages/ScannerMode';
+import AdminFinance from './pages/AdminFinance'; 
+import OrganizerDashboard from './pages/OrganizerDashboard';
+import LandingPage from './pages/LandingPage'; 
+import AboutPage from './pages/AboutPage';     
 import Events from './pages/Events';
 import GalleryPage from './pages/Gallery';
+import SupportPage from './pages/SupportPage'; // 🚀 Added Support
 import './App.css';
 import './index.css'
 import InstallButton from './components/InstallButton';
 import MyTickets from './pages/MyTickets';
+import TermsOfService from './pages/TermsAndServices';
+import PrivacyPolicy from './pages/LegalData';
 
 function App() {
   return (
     <BrowserRouter>
-      {/* Layout wrapper to push footer to bottom */}
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         
         <Navbar />
         <Toaster position="top-center" reverseOrder={false} />
+        <InstallButton /> 
 
-          <InstallButton /> {/* <--- Add it here */}
+        <main style={{ flex: 1 }}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/book/:eventId" element={<BookingPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/analytics/:eventId" element={<EventAnalytics />} />
+            <Route path="/admin/scanner/:eventId" element={<ScannerMode />} />
+            <Route path="/admin/finance" element={<AdminFinance />} />
+            <Route path="/organizer/dashboard" element={<OrganizerDashboard />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/my-tickets" element={<MyTickets />} />
+            <Route path="/gallery" element={<GalleryPage />} />
 
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/book" element={<BookingPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/my-tickets" element={<MyTickets />} />
-          <Route path="/gallery" element={<GalleryPage />} />
-
-          {/* Add other routes as needed */}        
-        </Routes>
+            {/* 🚀 LEGAL & SUPPORT ROUTES (Fixed placement) */}
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/support" element={<SupportPage />} />
+          </Routes>
+        </main>
 
         <Footer />
-        
       </div>
     </BrowserRouter>
   );

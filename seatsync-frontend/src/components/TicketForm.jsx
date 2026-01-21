@@ -1,49 +1,43 @@
 import { useState, useRef, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { User, Mail, Phone, UploadCloud, Info, CheckCircle, ShieldCheck } from 'lucide-react';
 
-// Updated props to include movie details
-export default function TicketForm({ onSubmit, selectedSeat, movieTitle, price }) {
-  const [formData, setFormData] = useState({ fullName: '', email: '', github: '' });
-  const [avatar, setAvatar] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
+export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [], movieTitle, price, loading }) {
+  const { user } = useUser();
+  const [formData, setFormData] = useState({ 
+    fullName: user?.fullName || '', 
+    email: user?.primaryEmailAddress?.emailAddress || '', 
+    phone: '' 
+  });
+  const [avatarPreview, setAvatarPreview] = useState(user?.imageUrl || null);
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
- 
-
-  const validateFile = (file) => {
-    if (!file) return "Please upload an image.";
-    if (file.size > 500 * 1024) return "File too large. Please upload a photo under 500KB.";
-    if (!['image/jpeg', 'image/png'].includes(file.type)) return "Invalid format. Use JPG or PNG.";
-    return null;
-  };
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.fullName || '',
+        email: user.primaryEmailAddress?.emailAddress || ''
+      }));
+      setAvatarPreview(user.imageUrl);
+    }
+  }, [user]);
 
   const handleFileChange = (file) => {
-    setErrors(prev => ({ ...prev, avatar: null }));
     if (!file) return;
-
-    const error = validateFile(file);
-    if (error) {
-      setErrors(prev => ({ ...prev, avatar: error }));
+    if (file.size > 1024 * 1024) {
+      setErrors(prev => ({ ...prev, avatar: "Image must be under 1MB" }));
       return;
     }
-
-    setAvatar(file);
     setAvatarPreview(URL.createObjectURL(file));
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileChange(e.dataTransfer.files[0]);
-    }
+    setErrors(prev => ({ ...prev, avatar: null }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
   const handleSubmit = (e) => {
@@ -51,13 +45,9 @@ export default function TicketForm({ onSubmit, selectedSeat, movieTitle, price }
     const newErrors = {};
 
     if (!formData.fullName.trim()) newErrors.fullName = "Full Name is required.";
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) newErrors.email = "Please enter a valid email address.";
-
-    if (!formData.github.trim()) newErrors.github = "GitHub username is required.";
-    
-    if (!avatar) newErrors.avatar = "Please upload an avatar.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Invalid email.";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
+    if (!avatarPreview) newErrors.avatar = "Profile photo is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -67,132 +57,121 @@ export default function TicketForm({ onSubmit, selectedSeat, movieTitle, price }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto space-y-6 pb-4">
+    <form onSubmit={handleSubmit} className="w-full max-w-xl mx-auto space-y-6 bg-[#1a1b26] p-6 md:p-8 rounded-3xl border border-white/5 shadow-2xl">
       
-      {/* --- NEW SECTION: Booking Summary --- */}
-      {selectedSeat && (
-        <div className="bg-orange-500/10 border border-orange-500/50 p-4 rounded-lg text-center animate-fade-in">
-           <h3 className="text-white font-bold text-xl mb-1">{movieTitle}</h3>
-           <div className="flex items-center justify-center gap-4 text-orange-400 font-mono text-sm">
-             <span className="bg-orange-500/20 px-2 py-1 rounded">SEAT: {selectedSeat}</span>
-             <span>•</span>
-             <span>TOTAL: KES{price}</span>
-           </div>
-        </div>
-      )}
-
-      {/* Upload Area */}
-      <div className="space-y-3">
-        <label className="block text-neutral-300 mb-2">Upload Avatar</label>
-        <div 
-          className={`
-            group relative flex flex-col items-center justify-center 
-            p-4 h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-neutral-900
-            bg-white/5 backdrop-blur-sm
-            ${errors.avatar ? 'border-orange-500 bg-orange-500/10' : 'border-neutral-500 hover:bg-neutral-700/50'}
-          `}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current.click()}
-          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current.click()}
-          tabIndex="0"
-          role="button"
-          aria-label="Upload avatar image"
-        >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={(e) => handleFileChange(e.target.files[0])} 
-            className="hidden" 
-            accept="image/png, image/jpeg" 
-          />
-          
-          <div className="p-2 bg-neutral-700 rounded-lg border border-neutral-500 mb-2 shadow-lg">
-             {avatarPreview ? (
-                <img src={avatarPreview} alt="Preview" className="w-8 h-8 rounded object-cover" />
-             ) : (
-                <svg className="w-6 h-6 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-             )}
+      {/* 1. SECURE BOOKING HEADER */}
+      <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-5">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-white font-black text-xl leading-tight">{movieTitle}</h3>
+            <p className="text-neutral-500 text-xs mt-1 flex items-center gap-1">
+              <ShieldCheck size={14} className="text-green-500" /> Secure Checkout
+            </p>
           </div>
-          <p className="text-neutral-300">Drag and drop or click to upload</p>
+          <div className="text-right">
+             <p className="text-orange-500 font-bold text-xl">KES {price?.toLocaleString()}</p>
+          </div>
         </div>
         
-        <p className="text-neutral-500 text-xs flex items-center gap-1">
-          <span className="w-4 h-4 inline-flex items-center justify-center bg-neutral-700 rounded-full text-[10px] text-neutral-300">i</span>
-          Upload your photo (JPG or PNG, max size: 500KB).
+        {/* FIX: Using optional chaining to prevent the .map error */}
+        <div className="flex flex-wrap gap-2 border-t border-white/5 pt-3">
+          {tiers?.map(tier => {
+            const qty = selectedTickets[tier.id];
+            if (!qty) return null;
+            return (
+              <span key={tier.id} className="bg-white/5 text-neutral-300 text-[10px] px-3 py-1 rounded-full border border-white/10 font-bold">
+                {qty}x {tier.name}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. PHOTO UPLOAD */}
+      <div className="flex flex-col items-center gap-4 py-2">
+        <div 
+          onClick={() => fileInputRef.current.click()}
+          className="relative group w-24 h-24 rounded-full border-2 border-dashed border-neutral-700 hover:border-orange-500 transition-all cursor-pointer flex items-center justify-center overflow-hidden"
+        >
+          <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e.target.files[0])} className="hidden" accept="image/*" />
+          {avatarPreview ? (
+            <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+          ) : (
+            <UploadCloud className="text-neutral-600 group-hover:text-orange-500 transition-colors" size={32} />
+          )}
+        </div>
+        <div className="text-center">
+          <p className="text-white text-sm font-bold">Attendee Photo</p>
+          <p className="text-neutral-500 text-[10px]">Used for ticket verification</p>
+          {errors.avatar && <p className="text-red-500 text-[10px] mt-1">{errors.avatar}</p>}
+        </div>
+      </div>
+
+      {/* 3. INPUT FIELDS */}
+      <div className="space-y-4 text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Full Name</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
+              <input 
+                type="text" name="fullName" value={formData.fullName} onChange={handleChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-orange-500 outline-none transition"
+                placeholder="John Doe"
+              />
+            </div>
+            {errors.fullName && <p className="text-red-500 text-[10px]">{errors.fullName}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Phone Number</label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
+              <input 
+                type="tel" name="phone" value={formData.phone} onChange={handleChange}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-orange-500 outline-none transition"
+                placeholder="+254700000000..."
+              />
+            </div>
+            {errors.phone && <p className="text-red-500 text-[10px]">{errors.phone}</p>}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Email Address</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
+            <input 
+              type="email" name="email" value={formData.email} onChange={handleChange}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-orange-500 outline-none transition"
+              placeholder="name@email.com"
+            />
+          </div>
+          {errors.email && <p className="text-red-500 text-[10px]">{errors.email}</p>}
+        </div>
+      </div>
+
+      <div className="flex items-start gap-3 bg-white/5 p-4 rounded-2xl text-left">
+        <Info className="text-orange-500 shrink-0" size={18} />
+        <p className="text-[10px] text-neutral-400 leading-relaxed">
+          By clicking below, you agree to receive your digital ticket via email. Tickets are non-refundable once generated. Please ensure your photo is clear for event entry.
         </p>
-        
-        {errors.avatar && (
-          <p className="text-orange-500 text-sm mt-1 flex items-center gap-1">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            {errors.avatar}
-          </p>
-        )}
       </div>
 
-      {/* Input Fields */}
-      <div className="space-y-5">
-        
-        {/* Full Name */}
-        <div>
-          <label htmlFor="fullName" className="block text-neutral-300 mb-2">Full Name</label>
-          <input 
-            type="text"
-            id="fullName"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            className={`w-full bg-white/10 border rounded-lg p-3 text-white placeholder-neutral-500 outline-none focus:ring-2 focus:ring-orange-500 transition
-              ${errors.fullName ? 'border-orange-500' : 'border-neutral-500'}`}
-            aria-invalid={!!errors.fullName}
-          />
-          {errors.fullName && <p className="text-orange-500 text-sm mt-1">{errors.fullName}</p>}
-        </div>
-
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="block text-neutral-300 mb-2">Email Address</label>
-          <input 
-            type="email"
-            id="email"
-            name="email"
-            placeholder="example@email.com"
-            value={formData.email}
-            onChange={handleChange}
-            className={`w-full bg-white/10 border rounded-lg p-3 text-white placeholder-neutral-500 outline-none focus:ring-2 focus:ring-orange-500 transition
-              ${errors.email ? 'border-orange-500' : 'border-neutral-500'}`}
-            aria-invalid={!!errors.email}
-          />
-          {errors.email && <p className="text-orange-500 text-sm mt-1">{errors.email}</p>}
-        </div>
-
-        {/* GitHub */}
-        <div>
-          <label htmlFor="github" className="block text-neutral-300 mb-2">GitHub Username</label>
-          <input 
-            type="text"
-            id="github"
-            name="github"
-            placeholder="@yourusername"
-            value={formData.github}
-            onChange={handleChange}
-            className={`w-full bg-white/10 border rounded-lg p-3 text-white placeholder-neutral-500 outline-none focus:ring-2 focus:ring-orange-500 transition
-              ${errors.github ? 'border-orange-500' : 'border-neutral-500'}`}
-            aria-invalid={!!errors.github}
-          />
-          {errors.github && <p className="text-orange-500 text-sm mt-1">{errors.github}</p>}
-        </div>
-      </div>
-
-      <button 
-        type="submit" 
-        className="w-full bg-orange-500 text-neutral-900 font-extrabold text-lg py-4 rounded-lg hover:bg-orange-700 transition shadow-[0_4px_0_hsl(7,71%,60%)] hover:shadow-none hover:translate-y-[4px] active:translate-y-[4px]"
-      >
-        {/* Dynamic Button Text */}
-        {selectedSeat ? `Pay & Generate Ticket (KES ${price})` : "Generate My Ticket"}
-      </button>
+      {/* 4. PAYMENT BUTTON */}
+     <button 
+  type="submit" 
+  // 🚀 Added check: Only disable if loading is true AND it's a valid click
+  disabled={loading} 
+  className={`
+    w-full py-4 rounded-2xl font-black text-lg transition-all transform active:scale-[0.98]
+    ${loading 
+      ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed' 
+      : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'}
+  `}
+>
+  {loading ? "PROCESSING..." : `PAY KES ${price?.toLocaleString()}`}
+</button>
     </form>
   );
 }

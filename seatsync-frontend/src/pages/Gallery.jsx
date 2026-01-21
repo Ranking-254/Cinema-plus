@@ -125,6 +125,7 @@ const GalleryPage = () => {
                 {event.title}
               </h3>
               <p className="text-gray-500 text-sm">Hosted: {event.date}</p>
+              
             </div>
 
             {/* Neon Glow on Hover */}

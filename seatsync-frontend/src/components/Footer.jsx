@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'; // <--- 1. Import Link
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -13,12 +13,12 @@ const Footer = () => {
         <div style={styles.column}>
           <h4>Links</h4>
           <Link to="/" style={styles.link}>Home</Link>
-          <Link to="/book" style={styles.link}>Book Now</Link>
           <Link to="/events" style={styles.link}>Events</Link>
           <Link to="/gallery" style={styles.link}>Gallery</Link>
           <Link to="/my-tickets" style={styles.link}>My Tickets</Link>
           <Link to="/about" style={styles.link}>About</Link>
-          
+          {/* 🚀 NEW SUPPORT LINK */}
+          <Link to="/support" style={styles.link}>Help & Support</Link>
         </div>
 
         <div style={styles.column}>
@@ -40,11 +40,19 @@ const Footer = () => {
           >
             +254 716700151
           </a>
+        </div>
 
+        <div style={styles.column}>
+          <h4>Legal</h4>
+          <Link to="/terms" style={styles.link}>Terms of Service</Link>
+          <Link to="/privacy" style={styles.link}>Privacy Policy</Link>
+          {/* Linked to support/terms context as defined previously */}
+          <Link to="/support" style={styles.link}>Refund Policy</Link> 
         </div>
       </div>
       <div style={styles.copy}>
         &copy; {new Date().getFullYear()} 🌀 Cinema <span style={{ color: "#7aa2f7" }}>plus+</span>. All rights reserved.
+        <p style={{ fontSize: '10px', marginTop: '5px', opacity: 0.5 }}>Professional Software Engineer Portfolio</p>
       </div>
     </footer>
   );
@@ -75,13 +83,15 @@ const styles = {
     color: '#7aa2f7',
     textDecoration: 'none',
     transition: 'color 0.2s',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontSize: '0.9rem'
   },
   contactLink: {
     color: '#a9b1d6',
     textDecoration: 'none',
     transition: 'color 0.2s',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontSize: '0.9rem'
   },
   copy: {
     textAlign: 'center',

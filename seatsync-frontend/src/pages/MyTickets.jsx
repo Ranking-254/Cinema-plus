@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { useAuth, useUser } from '@clerk/clerk-react'; // Added useUser for real avatar
+import { useAuth, useUser } from '@clerk/clerk-react';
 import GeneratedTicket from '../components/GeneratedTicket';
 import { API_URL } from '../config';
+import { toast } from 'react-hot-toast';
 
 const MyTicketsPage = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  
   const { getToken, isSignedIn } = useAuth();
-  const { user } = useUser(); // Get user data for the ticket visual
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -18,14 +21,18 @@ const MyTicketsPage = () => {
       }
 
       try {
+        setError(false);
         const token = await getToken();
+        // Backend uses .populate('event') to pull in movie details
         const response = await axios.get(`${API_URL}/api/seats/mine`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         setTickets(response.data.data);
-      } catch (error) {
-        console.error("Failed to fetch tickets", error);
+      } catch (err) {
+        console.error("Failed to fetch tickets", err);
+        setError(true);
+        toast.error("Could not load your tickets");
       } finally {
         setLoading(false);
       }
@@ -34,52 +41,81 @@ const MyTicketsPage = () => {
     fetchTickets();
   }, [isSignedIn, getToken]);
 
-  if (loading) return <div className="text-white text-center pt-24 animate-pulse">Loading tickets...</div>;
+  // Optimize: Handle signed-in check earlier
+  if (!isSignedIn && !loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f1014] text-white px-4">
+      <h2 className="text-3xl font-bold mb-4">Access Denied</h2>
+      <p className="text-gray-400 text-center">Please sign in to view your bookings.</p>
+    </div>
+  );
 
-  if (!isSignedIn) return (
-    <div className="text-white text-center pt-32 px-4">
-        <h2 className="text-2xl font-bold mb-4">Please Sign In</h2>
-        <p className="text-gray-400">You need to be logged in to view your tickets.</p>
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0f1014]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+        <p className="text-blue-500 font-bold tracking-widest animate-pulse">FETCHING TICKETS...</p>
+      </div>
     </div>
   );
 
   return (
-    // FIX 1: Reduced mobile padding (px-4) so tickets have full width
-    <div className="min-h-screen bg-[#0f1014] px-4 md:px-8 pt-24 pb-12">
+    <div className="min-h-screen bg-[#0f1014] px-4 md:px-8 pt-28 pb-12">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 text-center">My Tickets</h1>
-        <p className="text-gray-400 text-center mb-10">See you at the movies</p>
+        <header className="mb-12 text-center animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-2 uppercase italic tracking-tighter">
+            My <span className="text-blue-500">Collection</span>
+          </h1>
+          <p className="text-gray-500 font-medium tracking-[0.2em] uppercase text-xs">
+            Your upcoming experiences await
+          </p>
+        </header>
         
-        {tickets.length === 0 ? (
-          <p className="text-gray-400 text-center py-10">You haven't booked any tickets yet.</p>
+        {error ? (
+          <div className="bg-red-500/5 border border-red-500/20 rounded-2xl py-20 text-center">
+            <p className="text-red-400">Something went wrong. Please try again later.</p>
+          </div>
+        ) : tickets.length === 0 ? (
+          <div className="bg-gray-900/30 border border-gray-800/50 rounded-3xl py-32 text-center backdrop-blur-sm">
+            <div className="mb-4 flex justify-center text-gray-700">
+               <svg size={64} className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+               </svg>
+            </div>
+            <p className="text-gray-500 font-medium">You haven't booked any tickets yet.</p>
+            <button 
+              onClick={() => window.location.href = '/events'}
+              className="mt-6 text-blue-500 hover:text-blue-400 font-bold text-sm uppercase tracking-widest transition-colors"
+            >
+              Explore Events →
+            </button>
+          </div>
         ) : (
-          // FIX 2: Responsive Grid (1 col mobile, 2 col tablet, 3 col desktop)
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 place-items-center">
             {tickets.map((ticket) => (
               <div 
                 key={ticket._id} 
-                // FIX 3: Removed h-[250px]. Use h-auto so content fits.
-                // Added flex to center the ticket in its column
-                className="relative w-full h-auto flex flex-col items-center transform hover:scale-[1.02] transition-transform duration-300"
+                className="w-full transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 ease-out"
               >
-                 {/* FIX 4: Pass 'compact={true}' 
-                    This tells GeneratedTicket to hide the "Enjoy the show" header 
-                    so the list looks clean.
-                 */}
-                 <GeneratedTicket 
-                    compact={true} 
-                    data={{
-                      movie: "Avengers: Secret Wars", 
-                      seat: `${ticket.row}${ticket.number}`,
-                      price: ticket.price,
-                      date: "Dec 10, 2025",
-                      // Use real data from Clerk if available
-                      fullName: user?.fullName || "Guest User",
-                      email: user?.primaryEmailAddress?.emailAddress,
-                      avatarPreview: user?.imageUrl || "/assets/images/image-avatar.jpg",
-                      github: user?.username ? `@${user.username}` : "@cinema_fan"
-                    }} 
-                 />
+                <GeneratedTicket 
+                  compact={true} 
+                  data={{
+                    id: ticket._id.slice(-6).toUpperCase(),
+                    movie: ticket.event?.title || "Special Event", 
+                    // Map "row" to the Tier Name (e.g. VIP)
+                    seat: `${ticket.row} #${ticket.number}`, 
+                    price: `KES ${ticket.price.toLocaleString()}`,
+                    date: ticket.event?.date 
+                      ? new Date(ticket.event.date).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        }) 
+                      : "Date TBD",
+                    fullName: user?.fullName || "Guest",
+                    email: user?.primaryEmailAddress?.emailAddress,
+                    avatarPreview: user?.imageUrl || "/assets/images/image-avatar.jpg"
+                  }} 
+                />
               </div>
             ))}
           </div>

@@ -1,237 +1,259 @@
 import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth, useUser } from '@clerk/clerk-react'; 
-// 👇 1. Import EmailJS
 import emailjs from '@emailjs/browser';
+import { Info, AlertCircle, Clock } from 'lucide-react';
 
-import SeatMap from '../components/SeatMap';
+// Components
+import TicketPicker from '../components/TicketPicker';
 import Modal from '../components/Modal'; 
 import TicketForm from '../components/TicketForm';
 import GeneratedTicket from '../components/GeneratedTicket';
 import '../App.css';
 import { API_URL } from '../config';
 
-// Initialize socket connection
 const socket = io(API_URL);
 
 const BookingPage = () => {
-  const [seats, setSeats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [currentEventId, setCurrentEventId] = useState(null);
-  
-  // New State for the Ticket Logic
-  const [ticketData, setTicketData] = useState(null); 
-  const [isBooking, setIsBooking] = useState(false); 
-
+  const { eventId } = useParams();
+  const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
-  const { user } = useUser(); 
+  const { user } = useUser();
 
-  // 1. INITIALIZATION: Find the Event ID first
+  // --- 1. STATE MANAGEMENT ---
+  const [eventDetails, setEventDetails] = useState(null);
+  const [seats, setSeats] = useState([]); 
+  const [loading, setLoading] = useState(true); 
+  const [selectedTickets, setSelectedTickets] = useState({}); 
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isBooking, setIsBooking] = useState(false); 
+  const [ticketData, setTicketData] = useState(null); 
+
+  // --- 2. DATA LOADING & SOCKETS ---
   useEffect(() => {
-    const fetchEventId = async () => {
+    const loadData = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/events`);
+        setLoading(true);
+        // Fetch event details (Public)
+        const eventRes = await axios.get(`${API_URL}/api/events/${eventId}`);
+        if (eventRes.data.data) setEventDetails(eventRes.data.data);
+
+        // 🚀 FIX: Use the /public endpoint to avoid 500 errors for non-logged in users
+        const seatsRes = await axios.get(`${API_URL}/api/seats/event/${eventId}/public`);
         
-        if (response.data.data && response.data.data.length > 0) {
-          setCurrentEventId(response.data.data[0]._id);
-        } else {
-          toast.error("No events found in database!");
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Initialization Error:", error);
-        toast.error("Failed to connect to server");
-        setLoading(false);
-      }
-    };
-
-    fetchEventId();
-  }, []);
-
-  // 2. FETCH SEATS: Runs only after we have an Event ID
-  useEffect(() => {
-    if (!currentEventId) return; 
-
-    const fetchSeats = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/seats/event/${currentEventId}`);
-        setSeats(response.data.data);
+        // Convert the simple { TIER: count } object from /public into an array format 
+        // that your existing .reduce and helper functions expect.
+        const formattedSeats = Object.entries(seatsRes.data.data).flatMap(([tierName, count]) => 
+          Array(count).fill({ row: tierName })
+        );
+        
+        setSeats(formattedSeats);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching seats:", error);
-        toast.error("Failed to load map");
-        setLoading(false);
+        toast.error("Failed to load event data");
+        navigate('/events');
       }
     };
+    loadData();
 
-    fetchSeats();
-
-    // Socket Listeners
-    socket.on('seat_updated', (updatedSeat) => {
-      setSeats((currentSeats) => 
-        currentSeats.map((seat) => 
-          seat._id === updatedSeat._id ? updatedSeat : seat
-        )
-      );
+    socket.on('tickets_purchased', (data) => {
+      if (data.eventId === eventId) {
+        // 🚀 FIX: Also use the public endpoint for real-time updates
+        axios.get(`${API_URL}/api/seats/event/${eventId}/public`).then(res => {
+            const formattedSeats = Object.entries(res.data.data).flatMap(([tierName, count]) => 
+                Array(count).fill({ row: tierName })
+            );
+            setSeats(formattedSeats);
+        });
+      }
     });
 
-    socket.on('events_reset', (freshSeats) => {
-      toast("Event was reset by Admin!", { icon: '⚠️' });
-      setSeats(freshSeats);
-      setTicketData(null); 
-    });
+    return () => socket.off('tickets_purchased');
+  }, [eventId, navigate]);
 
-    return () => {
-      socket.off('seat_updated');
-      socket.off('events_reset');
-    };
-  }, [currentEventId]);
+  // --- 3. HELPER CALCULATIONS ---
+  const soldCounts = seats.reduce((acc, seat) => {
+    acc[seat.row] = (acc[seat.row] || 0) + 1;
+    return acc;
+  }, {});
 
-  // 3. Logic: Find the seat *I* am currently holding
-  const myHeldSeat = seats.find(
-    (seat) => seat.status === 'HELD' && seat.userId === user?.id
-  );
+  const totalHumanOccupancy = seats.reduce((sum, seat) => {
+    const multiplier = seat.row.toLowerCase().includes('group') ? 3 : 1;
+    return sum + multiplier;
+  }, 0);
 
-  // 4. Handle CLICK (Hold the seat)
-  const handleSeatClick = async (seat) => {
+  const isSoldOut = totalHumanOccupancy >= (eventDetails?.maxCapacity || 100);
+  const isExpired = eventDetails ? new Date(eventDetails.date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) : false;
+
+  const handleQuantityChange = (tierId, delta) => {
     if (!isSignedIn) return toast.error("Please sign in first");
+    if (isSoldOut || isExpired) return; 
     
-    if (ticketData) setTicketData(null);
-    
-    if (myHeldSeat) return toast.error("You can only hold one seat at a time!");
+    const tier = eventDetails.tiers.find(t => t.id === tierId);
+    if (!tier) return;
 
-    try {
-      const token = await getToken();
-      await axios.post(`${API_URL}/api/seats/hold`, 
-        { seatId: seat._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Seat Held! Complete the form to book.");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Hold failed");
-    }
+    const available = tier.capacity - (soldCounts[tier.name] || 0);
+
+    setSelectedTickets(prev => {
+      const currentQty = prev[tierId] || 0;
+      const newQty = Math.max(0, currentQty + delta);
+      
+      if (newQty > available) {
+        toast.error(`Only ${available} tickets left!`);
+        return prev;
+      }
+      if (newQty > 10) return prev;
+      return { ...prev, [tierId]: newQty };
+    });
   };
 
-  // 5. Handle FORM SUBMIT (Book the seat + Send Email)
-  const handleBookingSubmit = async (formData) => {
-    if (!myHeldSeat) return;
+  const totalTickets = Object.values(selectedTickets).reduce((a, b) => a + b, 0);
+  const totalPrice = eventDetails?.tiers?.reduce((acc, tier) => {
+    return acc + (tier.price * (selectedTickets[tier.id] || 0));
+  }, 0) || 0;
 
-    setIsBooking(true);
-    const toastId = toast.loading("Processing payment...");
+  // --- 4. SUBMISSION LOGIC ---
+  const handleBookingSubmit = async (formData) => {
+    if (totalTickets === 0) return toast.error("Please select at least one ticket");
+
+    setIsBooking(true); 
+    const toastId = toast.loading("Processing your order...");
 
     try {
       const token = await getToken();
       
-      // A. Call Backend (Save to DB Only)
-      // We removed the backend email logic, so this just marks it "SOLD"
-      await axios.post(`${API_URL}/api/seats/book`, 
-        { 
-          seatId: myHeldSeat._id,
-          // We still send these just in case you want to save them in DB later
-          email: formData.email, 
-          fullName: formData.fullName,
-          movie: "Avengers: Secret Wars", 
-          price: myHeldSeat.price 
-        },
+      const ticketSummary = Object.entries(selectedTickets)
+        .filter(([_, qty]) => qty > 0)
+        .map(([tierId, qty]) => {
+          const tier = eventDetails.tiers.find(t => t.id === tierId);
+          return `${qty}x ${tier.name}`;
+        })
+        .join(', ');
+      
+      await axios.post(`${API_URL}/api/seats/book-bulk`, 
+        { eventId, tickets: selectedTickets, customerDetails: formData },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      // B. Send Email via EmailJS (Frontend) 🚀
-      try {
-        const serviceID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-        const templateID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-        const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          to_name: formData.fullName,
+          to_email: formData.email,
+          event_title: eventDetails.title,
+          event_date: new Date(eventDetails.date).toLocaleDateString('en-KE', { 
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+          }),
+          location: eventDetails.location,
+          ticket_details: ticketSummary,
+          total_price: totalPrice.toLocaleString(),
+          order_id: Math.random().toString(36).substr(2, 9).toUpperCase()
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      ).catch(e => console.error("Email failed:", e));
 
-        const emailParams = {
-            to_name: formData.fullName,
-            to_email: formData.email, // Ensure your EmailJS template uses {{to_email}}
-            movie: "Avengers: Secret Wars",
-            seat: `${myHeldSeat.row}${myHeldSeat.number}`,
-            price: myHeldSeat.price
-        };
-
-        // Send email without blocking the UI (fire and forget)
-        await emailjs.send(serviceID, templateID, emailParams, publicKey);
-        console.log("✅ Email sent successfully via EmailJS!");
-        
-      } catch (emailError) {
-        console.error("❌ EmailJS Failed:", emailError);
-        // We don't stop the booking if email fails, just log it
-      }
-
-      // C. Success UI
-      toast.dismiss(toastId);
-      toast.success("Booking Successful!");
-
-      // Save local state to show the ticket on screen
-      setTicketData({
+      toast.success("Booking Confirmed!", { id: toastId });
+      
+      setTicketData({ 
         ...formData, 
-        seat: `${myHeldSeat.row}${myHeldSeat.number}`,
-        price: myHeldSeat.price,
-        movie: "Avengers: Secret Wars", 
-        date: "Oct 25, 2025" 
+        movie: eventDetails.title, 
+        price: totalPrice, 
+        quantity: totalTickets,
+        row: Object.keys(selectedTickets).map(id => eventDetails.tiers.find(t => t.id === id).name).join(', '),
+        date: new Date(eventDetails.date).toLocaleDateString() 
       });
 
     } catch (error) {
-      toast.dismiss(toastId);
-      toast.error("Payment Failed. Timer may have expired.");
-      console.error(error);
+      toast.error(error.response?.data?.message || "Booking failed", { id: toastId });
     } finally {
       setIsBooking(false);
     }
   };
 
-  // 6. Handle CANCEL (Release)
-  const handleCancelClick = async () => {
-    if (ticketData) {
-        setTicketData(null); 
-        return;
-    }
-
-    if (!myHeldSeat) return;
-
-    try {
-      const token = await getToken();
-      await axios.post(`${API_URL}/api/seats/release`, 
-        { seatId: myHeldSeat._id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Seat released.");
-    } catch (error) {
-      console.error("Release failed", error);
-    }
-  };
+  if (loading) return <div className="text-white p-20 text-center animate-pulse">Loading event...</div>;
 
   return (
-    <>
-      <div className="container">
-        <SeatMap 
-          seats={seats} 
-          loading={loading} 
-          onSeatClick={handleSeatClick} 
+    <div className="container p-4 min-h-screen">
+      <div className="text-center mt-10 mb-6">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tighter">{eventDetails?.title}</h1>
+        <p className="text-neutral-500 mt-2 font-bold text-sm uppercase tracking-widest">
+          📍 {eventDetails?.location} • 📅 {new Date(eventDetails?.date).toLocaleDateString()}
+        </p>
+      </div>
+
+      <div className="max-w-2xl mx-auto mb-6">
+        {isExpired ? (
+          <div className="bg-red-500/10 border border-red-500/50 p-4 rounded-2xl flex items-center gap-3 text-red-500">
+            <Clock size={20} />
+            <p className="text-sm font-bold uppercase tracking-tight">This event has already ended</p>
+          </div>
+        ) : isSoldOut ? (
+          <div className="bg-orange-500/10 border border-orange-500/50 p-4 rounded-2xl flex items-center gap-3 text-orange-500">
+            <AlertCircle size={20} />
+            <p className="text-sm font-bold uppercase tracking-tight">This event is fully booked</p>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="max-w-2xl mx-auto mb-10 bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md">
+        <div className="flex items-center gap-2 mb-3 text-orange-500">
+          <Info size={18} />
+          <h2 className="text-xs font-black uppercase tracking-widest">Event Description</h2>
+        </div>
+        <p className="text-neutral-300 text-sm leading-relaxed italic">
+          {eventDetails?.description || "No description provided for this event."}
+        </p>
+      </div>
+      
+      <div className={(isSoldOut || isExpired) ? "opacity-40 pointer-events-none grayscale" : ""}>
+        <TicketPicker 
+          key={eventDetails?._id || 'picker'} 
+          tiers={eventDetails?.tiers || []} 
+          selectedTickets={selectedTickets}
+          onQuantityChange={handleQuantityChange}
+          loading={loading}
+          soldCounts={soldCounts}
         />
       </div>
 
-      <Modal isOpen={!!myHeldSeat || !!ticketData} onClose={handleCancelClick}>
-        
-        {ticketData ? (
-           <GeneratedTicket data={ticketData} />
-        ) : (
-           myHeldSeat && (
-             <TicketForm 
-               selectedSeat={`${myHeldSeat.row}${myHeldSeat.number}`}
-               price={myHeldSeat.price}
-               movieTitle="Avengers: Secret Wars"
-               onSubmit={handleBookingSubmit}
-               loading={isBooking}
-             />
-           )
-        )}
+      {totalTickets > 0 && !ticketData && !isSoldOut && !isExpired && (
+        <div className="checkout-bar">
+          <div className="price-summary">
+            <p>{totalTickets} tickets selected</p>
+            <h3>KES {totalPrice.toLocaleString()}</h3>
+          </div>
+          <button 
+            onClick={() => setIsModalOpen(true)} 
+            className="btn-pay"
+          >
+            Get Tickets
+          </button>
+        </div>
+      )}
 
+      <Modal 
+        isOpen={isModalOpen || !!ticketData} 
+        onClose={() => { setIsModalOpen(false); setTicketData(null); setIsBooking(false); }}
+      >
+        {ticketData ? (
+           <GeneratedTicket key="success-ticket" data={ticketData} />
+        ) : (
+           <TicketForm 
+             key="booking-form"
+             movieTitle={eventDetails?.title}
+             price={totalPrice}
+             tiers={eventDetails?.tiers}
+             selectedTickets={selectedTickets}
+             onSubmit={handleBookingSubmit}
+             loading={isBooking}
+           />
+        )}
       </Modal>
-    </>
+    </div>
   );
 };
 

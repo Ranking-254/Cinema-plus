@@ -1,49 +1,62 @@
 const mongoose = require('mongoose');
 
 const seatSchema = new mongoose.Schema({
-  event: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event',
-    required: true
+  event: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Event', 
+    required: true 
   },
-  row: {
-    type: String,
+  row: { 
+    type: String, // In our tiered system, this is the Tier Name (VIP, Regular)
+    required: true, 
+    trim: true 
+  },
+  number: { 
+    type: Number, 
+    required: true 
+  },
+  price: { 
+    type: Number, 
+    required: true 
+  },
+  status: { 
+    type: String, 
+    enum: ['AVAILABLE', 'HELD', 'SOLD'], 
+    default: 'AVAILABLE' 
+  },
+  userId: { 
+    type: String, // Clerk User ID
     required: true,
-    trim: true // e.g., "A", "B"
+    index: true 
   },
-  number: {
-    type: Number,
-    required: true // e.g., 1, 2, 3
+  // 🚀 Added for Market Readiness
+  customerName: {
+     type: String 
+    },
+  customerEmail: { 
+    type: String 
   },
-  price: {
-    type: Number,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['AVAILABLE', 'HELD', 'SOLD'],
-    default: 'AVAILABLE'
-  },
-  // This is for the "Hold" timer
-  holdExpiresAt: {
-    type: Date,
-    default: null
-  },
-  // If held or sold, who owns it? (We will add User model later, for now just store ID)
-  userId: {
-    type: String,
-    default: null
-  },
-  // OPTIMISTIC CONCURRENCY: The version number prevents race conditions
-  version: {
-    type: Number,
-    default: 0
-  }
-});
+  paymentReference: {
+     type: String
+     }, // For M-Pesa Receipt Numbers
 
-// CRITICAL: Prevent duplicate seats (e.g., Row A, Seat 1) for the same Event
+status: {
+   type: String, 
+   default: 'SOLD'
+   }, // SOLD, CANCELLED
+  isUsed: {
+     type: Boolean,
+      default: false
+     }, // 🚀 NEW: Track if they entered the venue
+  scannedAt: {
+     type: Date
+     }, // 🚀 NEW: For security audits
+
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt
+
+// Unique constraint to prevent double-booking the same "seat number" in a tier
 seatSchema.index({ event: 1, row: 1, number: 1 }, { unique: true });
+// Performance index to eliminate lag when loading event pages
+seatSchema.index({ event: 1 }); 
 
-const Seat = mongoose.model('Seat', seatSchema);
-
-module.exports = Seat;
+module.exports = mongoose.models.Seat || mongoose.model('Seat', seatSchema);
