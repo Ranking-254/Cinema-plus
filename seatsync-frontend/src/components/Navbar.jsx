@@ -14,41 +14,37 @@ const Navbar = () => {
   
   const ADMIN_ID = import.meta.env.VITE_SUPER_ADMIN_ID;
 
-  // 🚀 Check if user is a permitted organizer
-  // Inside Navbar.jsx - Update the useEffect logic
-useEffect(() => {
-  const checkPermission = async () => {
-    if (!user) {
-      setIsPermittedOrganizer(false);
-      return;
-    }
-    
-    if (user.id === ADMIN_ID) {
-      setIsPermittedOrganizer(true);
-      return;
-    }
-
-    try {
-      const token = await getToken();
-      const clerkId = user.id;
-      // 🚀 Normalize email to lowercase and trim to match DB standards
-      const email = user.primaryEmailAddress?.emailAddress?.toLowerCase().trim();
-
-      const res = await axios.get(
-        `${API_URL}/api/events/check-permission?clerkId=${clerkId}&email=${email}`, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!user) {
+        setIsPermittedOrganizer(false);
+        return;
+      }
       
-      // Only set true if the backend confirms they own an event
-      setIsPermittedOrganizer(res.data.isOrganizer === true);
-    } catch (err) {
-      console.error("Permission check failed", err);
-      setIsPermittedOrganizer(false);
-    }
-  };
+      if (user.id === ADMIN_ID) {
+        setIsPermittedOrganizer(true);
+        return;
+      }
 
-  checkPermission();
-}, [user, getToken]);
+      try {
+        const token = await getToken();
+        const clerkId = user.id;
+        const email = user.primaryEmailAddress?.emailAddress?.toLowerCase().trim();
+
+        const res = await axios.get(
+          `${API_URL}/api/events/check-permission?clerkId=${clerkId}&email=${email}`, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        setIsPermittedOrganizer(res.data.isOrganizer === true);
+      } catch (err) {
+        console.error("Permission check failed", err);
+        setIsPermittedOrganizer(false);
+      }
+    };
+
+    checkPermission();
+  }, [user, getToken, ADMIN_ID]); // Added ADMIN_ID to dependency array
 
   const isActive = (path) => location.pathname === path;
   const navLinks = [
@@ -66,7 +62,7 @@ useEffect(() => {
           
           <Link to="/" className="flex items-center gap-2 group">
              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                🌀 Cinema <span className="text-[#7aa2f7]">plus+</span>
+               🌀 Cinema <span className="text-[#7aa2f7]">plus+</span>
              </h2>
           </Link>
 
@@ -78,14 +74,14 @@ useEffect(() => {
               </Link>
             ))}
             
-            {user?.id === ADMIN_ID && (
+            {/* 🚀 FIXED: Added check for 'user' existence */}
+            {user && user.id === ADMIN_ID && (
               <div className="flex gap-4 border-l border-white/10 pl-4">
                 <Link to="/admin" className="text-sm font-medium text-red-500 hover:text-red-400">Admin</Link>
                 <Link to="/admin/finance" className="text-sm font-medium text-red-500 hover:text-red-400">Finance</Link>
               </div>
             )}
 
-            {/* 🚀 ONLY SHOW IF PERMITTED */}
             {isPermittedOrganizer && (
               <Link to="/organizer/dashboard" className="text-sm font-bold text-orange-500 hover:text-orange-400 flex items-center gap-1">
                 <LayoutDashboard size={16} /> My Events
@@ -117,7 +113,6 @@ useEffect(() => {
               </Link>
             ))}
 
-            {/* 🚀 ONLY SHOW IF PERMITTED ON MOBILE */}
             {isPermittedOrganizer && (
                <div className="pt-4 border-t border-white/5 mt-2">
                 <p className="px-3 py-2 text-[10px] font-bold text-orange-500/50 uppercase">Authorized Organizer</p>
@@ -127,7 +122,8 @@ useEffect(() => {
                </div>
             )}
 
-            {user?.id === ADMIN_ID && (
+            {/* 🚀 FIXED: Added check for 'user' existence */}
+            {user && user.id === ADMIN_ID && (
               <div className="pt-4 space-y-2">
                 <p className="px-3 py-2 text-[10px] font-bold text-red-500/50 uppercase">Super Admin</p>
                 <Link to="/admin" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-red-500 bg-red-500/10 rounded-xl"><ShieldCheck size={18} /> Admin</Link>
