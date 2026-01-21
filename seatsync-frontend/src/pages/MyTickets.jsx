@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth, useUser, useClerk } from '@clerk/clerk-react'; // 🚀 Added useClerk
 import GeneratedTicket from '../components/GeneratedTicket';
 import { API_URL } from '../config';
 import { toast } from 'react-hot-toast';
+import { Lock } from 'lucide-react'; // Added an icon for better UI
 
 const MyTicketsPage = () => {
   const [tickets, setTickets] = useState([]);
@@ -12,6 +13,7 @@ const MyTicketsPage = () => {
   
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
+  const { openSignIn } = useClerk(); // 🚀 Hook for the modal
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -23,7 +25,6 @@ const MyTicketsPage = () => {
       try {
         setError(false);
         const token = await getToken();
-        // Backend uses .populate('event') to pull in movie details
         const response = await axios.get(`${API_URL}/api/seats/mine`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -41,11 +42,24 @@ const MyTicketsPage = () => {
     fetchTickets();
   }, [isSignedIn, getToken]);
 
-  // Optimize: Handle signed-in check earlier
+  // 🚀 UPDATED: Professional Sign In Prompt instead of Access Denied
   if (!isSignedIn && !loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f1014] text-white px-4">
-      <h2 className="text-3xl font-bold mb-4">Access Denied</h2>
-      <p className="text-gray-400 text-center">Please sign in to view your bookings.</p>
+      <div className="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] flex flex-col items-center max-w-sm w-full text-center backdrop-blur-xl">
+        <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-6">
+          <Lock size={32} />
+        </div>
+        <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-2">Private Collection</h2>
+        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+          Your tickets are protected. Please sign in to view your bookings and upcoming experiences.
+        </p>
+        <button 
+          onClick={() => openSignIn({ mode: 'modal' })}
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+        >
+          Sign In Now
+        </button>
+      </div>
     </div>
   );
 
@@ -101,7 +115,6 @@ const MyTicketsPage = () => {
                   data={{
                     id: ticket._id.slice(-6).toUpperCase(),
                     movie: ticket.event?.title || "Special Event", 
-                    // Map "row" to the Tier Name (e.g. VIP)
                     seat: `${ticket.row} #${ticket.number}`, 
                     price: `KES ${ticket.price.toLocaleString()}`,
                     date: ticket.event?.date 

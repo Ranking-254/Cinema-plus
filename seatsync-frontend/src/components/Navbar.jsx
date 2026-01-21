@@ -44,7 +44,7 @@ const Navbar = () => {
     };
 
     checkPermission();
-  }, [user, getToken, ADMIN_ID]); // Added ADMIN_ID to dependency array
+  }, [user, getToken, ADMIN_ID]);
 
   const isActive = (path) => location.pathname === path;
   const navLinks = [
@@ -74,7 +74,6 @@ const Navbar = () => {
               </Link>
             ))}
             
-            {/* 🚀 FIXED: Added check for 'user' existence */}
             {user && user.id === ADMIN_ID && (
               <div className="flex gap-4 border-l border-white/10 pl-4">
                 <Link to="/admin" className="text-sm font-medium text-red-500 hover:text-red-400">Admin</Link>
@@ -94,6 +93,7 @@ const Navbar = () => {
             <SignedIn><UserButton afterSignOutUrl="/" /></SignedIn>
           </div>
 
+          {/* MOBILE TOGGLE */}
           <div className="md:hidden flex items-center gap-4">
             <SignedIn><UserButton afterSignOutUrl="/" /></SignedIn>
             <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-gray-300 hover:text-white bg-white/5 rounded-lg">
@@ -113,6 +113,17 @@ const Navbar = () => {
               </Link>
             ))}
 
+            {/* 🚀 ADDED: SIGN IN BUTTON FOR MOBILE GUESTS */}
+            <SignedOut>
+              <div className="px-4 py-4 border-t border-white/5 mt-2">
+                <SignInButton mode="modal">
+                  <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform">
+                    Sign In to Account
+                  </button>
+                </SignInButton>
+              </div>
+            </SignedOut>
+
             {isPermittedOrganizer && (
                <div className="pt-4 border-t border-white/5 mt-2">
                 <p className="px-3 py-2 text-[10px] font-bold text-orange-500/50 uppercase">Authorized Organizer</p>
@@ -122,7 +133,6 @@ const Navbar = () => {
                </div>
             )}
 
-            {/* 🚀 FIXED: Added check for 'user' existence */}
             {user && user.id === ADMIN_ID && (
               <div className="pt-4 space-y-2">
                 <p className="px-3 py-2 text-[10px] font-bold text-red-500/50 uppercase">Super Admin</p>

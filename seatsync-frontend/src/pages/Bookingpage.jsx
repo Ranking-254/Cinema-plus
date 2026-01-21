@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { useAuth, useUser } from '@clerk/clerk-react'; 
+import { useAuth, useUser, useClerk } from '@clerk/clerk-react'; 
 import emailjs from '@emailjs/browser';
 import { Info, AlertCircle, Clock } from 'lucide-react';
 
@@ -22,6 +22,7 @@ const BookingPage = () => {
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
+  const { openSignIn } = useClerk(); // 🚀 Hook added correctly here
 
   // --- 1. STATE MANAGEMENT ---
   const [eventDetails, setEventDetails] = useState(null);
@@ -37,15 +38,11 @@ const BookingPage = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        // Fetch event details (Public)
         const eventRes = await axios.get(`${API_URL}/api/events/${eventId}`);
         if (eventRes.data.data) setEventDetails(eventRes.data.data);
 
-        // 🚀 FIX: Use the /public endpoint to avoid 500 errors for non-logged in users
         const seatsRes = await axios.get(`${API_URL}/api/seats/event/${eventId}/public`);
         
-        // Convert the simple { TIER: count } object from /public into an array format 
-        // that your existing .reduce and helper functions expect.
         const formattedSeats = Object.entries(seatsRes.data.data).flatMap(([tierName, count]) => 
           Array(count).fill({ row: tierName })
         );
@@ -61,7 +58,6 @@ const BookingPage = () => {
 
     socket.on('tickets_purchased', (data) => {
       if (data.eventId === eventId) {
-        // 🚀 FIX: Also use the public endpoint for real-time updates
         axios.get(`${API_URL}/api/seats/event/${eventId}/public`).then(res => {
             const formattedSeats = Object.entries(res.data.data).flatMap(([tierName, count]) => 
                 Array(count).fill({ row: tierName })
@@ -89,7 +85,14 @@ const BookingPage = () => {
   const isExpired = eventDetails ? new Date(eventDetails.date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) : false;
 
   const handleQuantityChange = (tierId, delta) => {
-    if (!isSignedIn) return toast.error("Please sign in first");
+    // 🚀 FIXED: Trigger Clerk modal instead of toast or redirect
+    if (!isSignedIn) {
+      return openSignIn({
+        mode: 'modal',
+        afterSignInUrl: window.location.href
+      });
+    }
+    
     if (isSoldOut || isExpired) return; 
     
     const tier = eventDetails.tiers.find(t => t.id === tierId);
