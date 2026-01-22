@@ -53,8 +53,11 @@ const LandingPage = () => {
               Get Tickets <ArrowRight size={20} />
             </Link>
             <button className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-2xl transition-all flex items-center justify-center gap-2">
+              <Link to="/how-it-works" className="flex items-center gap-2">
               <Play size={18} fill="currentColor" /> See How it Works
+                </Link>
             </button>
+
           </div>
 
           {/* Social Proof */}

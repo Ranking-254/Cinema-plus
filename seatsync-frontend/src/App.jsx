@@ -19,6 +19,7 @@ import InstallButton from './components/InstallButton';
 import MyTickets from './pages/MyTickets';
 import TermsOfService from './pages/TermsAndServices';
 import PrivacyPolicy from './pages/LegalData';
+import HowItWorks from './pages/HowItWorks';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/my-tickets" element={<MyTickets />} />
             <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
 
             {/* 🚀 LEGAL & SUPPORT ROUTES (Fixed placement) */}
             <Route path="/terms" element={<TermsOfService />} />
