@@ -46,6 +46,7 @@ const LandingPage = () => {
           <p className="max-w-2xl mx-auto text-neutral-400 text-lg md:text-xl mb-10 leading-relaxed font-medium">
             Kenya's most advanced real-time seat reservation engine. 
             Instant M-Pesa payouts, zero double-bookings, 100% immersion.
+            You can create and manage your event bookings all in one place.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
