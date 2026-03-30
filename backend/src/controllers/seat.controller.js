@@ -15,7 +15,6 @@ exports.getEventSeats = async (req, res) => {
       return res.status(404).json({ message: "Event not found." });
     }
 
-    // Wrap Clerk lookup to avoid 500 errors for non-existent users during lookup
     let userEmails = [];
     try {
       const user = await clerkClient.users.getUser(userId);
@@ -26,7 +25,6 @@ exports.getEventSeats = async (req, res) => {
 
     const savedIdentifier = event.organizerIdentifier?.toLowerCase();
 
-    // DUAL PERMISSION CHECK: Supports Super Admin, Clerk ID, or Email matching
     const isAuthorized = 
       userId === SUPER_ADMIN_ID || 
       userId === event.organizerIdentifier || 
@@ -53,12 +51,10 @@ exports.getEventSeats = async (req, res) => {
   }
 };
 
-// 2. PUBLIC: Get seat counts by tier for an event (No auth required)
+// 2. PUBLIC: Get seat counts by tier for an event
 exports.getPublicSeatCounts = async (req, res) => {
   try {
     const { eventId } = req.params;
-    
-    // Only fetch the row/tier field to count availability
     const tickets = await Seat.find({ event: eventId }).select('row');
 
     const stats = tickets.reduce((acc, t) => {
@@ -76,11 +72,20 @@ exports.getPublicSeatCounts = async (req, res) => {
   }
 };
 
-// 3. BULK BOOKING (Open to all customers)
+// 3. BULK BOOKING (With Terms of Service Validation)
 exports.bookBulkTickets = async (req, res) => {
   try {
-    const { eventId, tickets, customerDetails } = req.body;
+    // 🚀 EXTRACTED acceptedTerms from req.body
+    const { eventId, tickets, customerDetails, acceptedTerms } = req.body;
     const userId = req.auth.userId;
+
+    // 🛡️ SECURITY CHECK: Ensure terms are accepted before processing
+    if (!acceptedTerms) {
+      return res.status(400).json({ 
+        status: 'fail',
+        message: "Terms of Service must be accepted to proceed with booking." 
+      });
+    }
 
     if (!customerDetails || !customerDetails.email || !customerDetails.fullName) {
       return res.status(400).json({ message: "Customer details are required for ticket generation." });
@@ -91,7 +96,7 @@ exports.bookBulkTickets = async (req, res) => {
       return res.status(404).json({ message: "Event not found." });
     }
 
-    // Helper to calculate capacity impact based on ticket types
+    // Helper to calculate capacity impact
     const calculateTotalImpact = (selectedTickets) => {
       return Object.entries(selectedTickets).reduce((sum, [tierName, qty]) => {
         const multiplier = tierName.toLowerCase().includes('group') ? 3 : 1;
@@ -108,7 +113,6 @@ exports.bookBulkTickets = async (req, res) => {
 
     const newBookingImpact = calculateTotalImpact(tickets);
 
-    // Validation against event maxCapacity
     if (currentOccupancy + newBookingImpact > event.maxCapacity) {
       return res.status(400).json({ 
         status: 'fail',
@@ -116,15 +120,15 @@ exports.bookBulkTickets = async (req, res) => {
       });
     }
 
-    // Delegating to seatService to handle numbering and database writes
+    // 🚀 PASSING acceptedTerms to the service layer for DB persistence
     const bookingResults = await seatService.createBulkBookings(
       eventId, 
       userId, 
       tickets, 
-      customerDetails
+      customerDetails,
+      acceptedTerms 
     );
 
-    // Socket.io real-time update
     const io = req.app.get('io');
     io.emit('tickets_purchased', { eventId, tickets });
 
@@ -147,23 +151,19 @@ exports.checkInTicket = async (req, res) => {
     const userId = req.auth.userId;
     const SUPER_ADMIN_ID = process.env.SUPER_ADMIN_ID;
 
-    // 1. Find the ticket and populate event to check permissions
     const ticket = await Seat.findById(ticketId).populate('event');
     if (!ticket) return res.status(404).json({ message: "Ticket not found." });
 
-    // 2. Fetch current user's emails from Clerk for flexible identification
     let userEmails = [];
     try {
       const user = await clerkClient.users.getUser(userId);
       userEmails = user.emailAddresses.map(e => e.emailAddress.toLowerCase());
     } catch (clerkErr) {
-      console.warn("Clerk lookup failed during check-in, using ID check only.");
+      console.warn("Clerk lookup failed during check-in.");
     }
 
     const savedIdentifier = ticket.event.organizerIdentifier?.toLowerCase();
 
-    // 🛡️ SECURE DUAL PERMISSION CHECK
-    // Allows Super Admin, Clerk ID match, or Email match
     const isAuthorized = 
       userId === SUPER_ADMIN_ID || 
       userId === ticket.event.organizerIdentifier || 
@@ -171,11 +171,10 @@ exports.checkInTicket = async (req, res) => {
 
     if (!isAuthorized) {
       return res.status(403).json({ 
-        message: "ACCESS DENIED: You are not authorized to check-in guests for this event." 
+        message: "ACCESS DENIED: You are not authorized for this event." 
       });
     }
 
-    // 3. Prevent double entry
     if (ticket.isUsed) {
       return res.status(400).json({ 
         message: "Warning: Ticket already used!", 
@@ -183,7 +182,6 @@ exports.checkInTicket = async (req, res) => {
       });
     }
 
-    // 4. Update the ticket status
     ticket.isUsed = true;
     ticket.scannedAt = new Date();
     await ticket.save();
@@ -195,7 +193,7 @@ exports.checkInTicket = async (req, res) => {
 
   } catch (error) {
     console.error("💥 Check-in Controller Error:", error);
-    res.status(500).json({ message: "Internal server error during check-in processing." });
+    res.status(500).json({ message: "Internal server error during check-in." });
   }
 };
 
@@ -215,7 +213,7 @@ exports.getMyTickets = async (req, res) => {
   }
 };
 
-// 6. ADMIN RESET (System Maintenance)
+// 6. ADMIN RESET
 exports.resetEvent = async (req, res) => {
   try {
     const SUPER_ADMIN_ID = process.env.SUPER_ADMIN_ID;

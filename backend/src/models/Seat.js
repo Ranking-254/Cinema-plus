@@ -40,10 +40,23 @@ const seatSchema = new mongoose.Schema({
      type: String
      }, // For M-Pesa Receipt Numbers
 
-status: {
-   type: String, 
-   default: 'SOLD'
-   }, // SOLD, CANCELLED
+
+
+   // 🚀 LEGAL & COMPLIANCE: Agreement to Terms
+  tosAccepted: {
+    type: Boolean,
+    default: false,
+    required: [true, 'Terms must be accepted to issue a ticket']
+  },
+  tosVersion: {
+    type: String,
+    default: '1.0' // Update this string if you change your refund policy
+  },
+  acceptedAt: {
+    type: Date,
+    default: Date.now
+  },
+
   isUsed: {
      type: Boolean,
       default: false

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { User, Mail, Phone, UploadCloud, Info, CheckCircle, ShieldCheck } from 'lucide-react';
+import { User, Mail, Phone, UploadCloud, Info, CheckCircle, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [], movieTitle, price, loading }) {
   const { user } = useUser();
@@ -10,6 +10,7 @@ export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [],
     phone: '' 
   });
   const [avatarPreview, setAvatarPreview] = useState(user?.imageUrl || null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false); // NEW STATE
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
@@ -48,11 +49,15 @@ export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [],
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Invalid email.";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
     if (!avatarPreview) newErrors.avatar = "Profile photo is required.";
+    
+    // NEW VALIDATION: Ensure checkbox is ticked
+    if (!acceptedTerms) newErrors.terms = "You must agree to the terms to proceed.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
-      onSubmit({ ...formData, avatarPreview });
+      // Pass the acceptance status to your parent component/backend
+      onSubmit({ ...formData, avatarPreview, acceptedTerms });
     }
   };
 
@@ -73,7 +78,6 @@ export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [],
           </div>
         </div>
         
-        {/* FIX: Using optional chaining to prevent the .map error */}
         <div className="flex flex-wrap gap-2 border-t border-white/5 pt-3">
           {tiers?.map(tier => {
             const qty = selectedTickets[tier.id];
@@ -124,7 +128,7 @@ export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [],
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Phone Number</label>
+            <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Phone Number*</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
               <input 
@@ -138,7 +142,7 @@ export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [],
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Email Address</label>
+          <label className="text-neutral-400 text-xs font-bold uppercase ml-1">Email Address*</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" size={16} />
             <input 
@@ -151,27 +155,45 @@ export default function TicketForm({ onSubmit, selectedTickets = {}, tiers = [],
         </div>
       </div>
 
-      <div className="flex items-start gap-3 bg-white/5 p-4 rounded-2xl text-left">
-        <Info className="text-orange-500 shrink-0" size={18} />
-        <p className="text-[10px] text-neutral-400 leading-relaxed">
-          By clicking below, you agree to receive your digital ticket via email. Tickets are non-refundable once generated. Please ensure your photo is clear for event entry.
-        </p>
+      {/* UPDATED: TERMS OF SERVICE BOX WITH CHECKBOX */}
+      <div className={`flex items-start gap-3 p-4 rounded-2xl text-left transition-all ${errors.terms ? 'bg-red-500/10 border border-red-500/20' : 'bg-white/5 border border-transparent'}`}>
+        <div className="pt-0.5">
+          <input 
+            type="checkbox" 
+            id="terms"
+            checked={acceptedTerms}
+            onChange={(e) => {
+                setAcceptedTerms(e.target.checked);
+                if (errors.terms) setErrors(prev => ({ ...prev, terms: null }));
+            }}
+            className="w-4 h-4 rounded border-white/10 bg-white/5 text-orange-500 focus:ring-orange-500 focus:ring-offset-0 transition cursor-pointer"
+          />
+        </div>
+        <label htmlFor="terms" className="cursor-pointer select-none group">
+          <p className="text-[11px] text-neutral-400 leading-relaxed group-hover:text-neutral-300 transition-colors">
+            By checking this box, you agree to receive your digital ticket via email. Tickets are <span className="text-orange-400 font-bold">non-refundable</span> once generated. Ensure your photo is clear for event entry.
+          </p>
+          {errors.terms && (
+            <div className="flex items-center gap-1 mt-1.5 text-red-500 font-bold text-[9px] uppercase tracking-wider">
+              <AlertCircle size={10} /> {errors.terms}
+            </div>
+          )}
+        </label>
       </div>
 
       {/* 4. PAYMENT BUTTON */}
-     <button 
-  type="submit" 
-  // 🚀 Added check: Only disable if loading is true AND it's a valid click
-  disabled={loading} 
-  className={`
-    w-full py-4 rounded-2xl font-black text-lg transition-all transform active:scale-[0.98]
-    ${loading 
-      ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed' 
-      : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'}
-  `}
->
-  {loading ? "PROCESSING..." : `PAY KES ${price?.toLocaleString()}`}
-</button>
+      <button 
+        type="submit" 
+        disabled={loading} 
+        className={`
+          w-full py-4 rounded-2xl font-black text-lg transition-all transform active:scale-[0.98]
+          ${loading 
+            ? 'bg-neutral-800 text-neutral-600 cursor-not-allowed' 
+            : 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20'}
+        `}
+      >
+        {loading ? "PROCESSING..." : `PAY KES ${price?.toLocaleString()}`}
+      </button>
     </form>
   );
 }

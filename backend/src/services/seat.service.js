@@ -2,7 +2,8 @@ const Seat = require('../models/Seat');
 const Event = require('../models/Events');
 
 // 1. CREATE BULK BOOKINGS (The Core Engine) 🚀
-exports.createBulkBookings = async (eventId, userId, tickets, customerDetails) => {
+// Added acceptedTerms to the arguments list
+exports.createBulkBookings = async (eventId, userId, tickets, customerDetails, acceptedTerms) => {
   const event = await Event.findById(eventId);
   if (!event) throw new Error("Event not found");
 
@@ -14,34 +15,35 @@ exports.createBulkBookings = async (eventId, userId, tickets, customerDetails) =
     const tier = event.tiers.find(t => t.id === tierId);
     
     if (tier) {
-      // 🚀 THE FIX: Use tier.name instead of tier.type
-      // tier.type is an enum (often "REGULAR" for multiple tiers), causing collisions.
-      // tier.name (e.g., "Early Bird", "VIP") is unique to the event's tiers.
-    const rowIdentifier = tier.name.trim().toUpperCase();
+      const rowIdentifier = tier.name.trim().toUpperCase();
 
-      // 🚀 Inventory Check: Use the unique rowIdentifier
+      // 🚀 Inventory Check
       const soldCount = await Seat.countDocuments({ event: eventId, row: rowIdentifier });
       
       if (soldCount + quantity > tier.capacity) {
         throw new Error(`Sorry, not enough tickets left for ${tier.name}. Only ${tier.capacity - soldCount} remaining.`);
       }
 
-      // 🚀 SEQUENCING FIX: Find the highest existing ticket number for this specific NAME
+      // 🚀 SEQUENCING: Find the highest existing ticket number
       const lastSeat = await Seat.findOne({ event: eventId, row: rowIdentifier })
                                  .sort({ number: -1 });
       
-      let startNumber = lastSeat ? lastSeat.number : 0;
+      let lastNumber = lastSeat ? lastSeat.number : 0;
 
       for (let i = 0; i < quantity; i++) {
         newTickets.push({
           event: eventId,
           userId: userId,
-          row: rowIdentifier, // Now matches the specific Tier Name
-          number: startNumber + i + 1, 
+          row: rowIdentifier, 
+          number: lastNumber + i + 1, 
           price: tier.price,
           status: 'SOLD',
           customerName: customerDetails.fullName,
-          customerEmail: customerDetails.email
+          customerEmail: customerDetails.email,
+          // 🚀 NEW LEGAL FIELDS
+          tosAccepted: acceptedTerms,
+          acceptedAt: new Date(),
+          tosVersion: "1.0" // Matches your current policy version
         });
       }
     }

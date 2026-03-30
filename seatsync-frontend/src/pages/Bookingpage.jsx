@@ -118,7 +118,7 @@ const BookingPage = () => {
     return acc + (tier.price * (selectedTickets[tier.id] || 0));
   }, 0) || 0;
 
-  // --- 4. SUBMISSION LOGIC ---
+// --- 4. SUBMISSION LOGIC ---
   const handleBookingSubmit = async (formData) => {
     if (totalTickets === 0) return toast.error("Please select at least one ticket");
 
@@ -136,8 +136,14 @@ const BookingPage = () => {
         })
         .join(', ');
       
+      // 🚀 UPDATED: Pass acceptedTerms into the request body
       await axios.post(`${API_URL}/api/seats/book-bulk`, 
-        { eventId, tickets: selectedTickets, customerDetails: formData },
+        { 
+          eventId, 
+          tickets: selectedTickets, 
+          customerDetails: formData,
+          acceptedTerms: formData.acceptedTerms // 👈 THIS WAS MISSING
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -171,6 +177,7 @@ const BookingPage = () => {
       });
 
     } catch (error) {
+      // This will now catch the 400 error and show the message from your backend
       toast.error(error.response?.data?.message || "Booking failed", { id: toastId });
     } finally {
       setIsBooking(false);
