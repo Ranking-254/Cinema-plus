@@ -22,7 +22,7 @@ const BookingPage = () => {
   const navigate = useNavigate();
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
-  const { openSignIn } = useClerk(); // 🚀 Hook added correctly here
+  const { openSignIn } = useClerk(); 
 
   // --- 1. STATE MANAGEMENT ---
   const [eventDetails, setEventDetails] = useState(null);
@@ -85,7 +85,6 @@ const BookingPage = () => {
   const isExpired = eventDetails ? new Date(eventDetails.date).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) : false;
 
   const handleQuantityChange = (tierId, delta) => {
-    // 🚀 FIXED: Trigger Clerk modal instead of toast or redirect
     if (!isSignedIn) {
       return openSignIn({
         mode: 'modal',
@@ -118,68 +117,104 @@ const BookingPage = () => {
     return acc + (tier.price * (selectedTickets[tier.id] || 0));
   }, 0) || 0;
 
-// --- 4. SUBMISSION LOGIC ---
+  // --- 4. SUBMISSION LOGIC ---
   const handleBookingSubmit = async (formData) => {
     if (totalTickets === 0) return toast.error("Please select at least one ticket");
 
-    setIsBooking(true); 
-    const toastId = toast.loading("Processing your order...");
+    setIsBooking(true);
+    const toastId = toast.loading("Initiating M-Pesa payment...");
 
     try {
       const token = await getToken();
-      
-      const ticketSummary = Object.entries(selectedTickets)
-        .filter(([_, qty]) => qty > 0)
-        .map(([tierId, qty]) => {
-          const tier = eventDetails.tiers.find(t => t.id === tierId);
-          return `${qty}x ${tier.name}`;
-        })
-        .join(', ');
-      
-      // 🚀 UPDATED: Pass acceptedTerms into the request body
-      await axios.post(`${API_URL}/api/seats/book-bulk`, 
+
+      const mpesaRes = await axios.post(`${API_URL}/api/v1/mpesa/stkpush`, 
         { 
-          eventId, 
-          tickets: selectedTickets, 
-          customerDetails: formData,
-          acceptedTerms: formData.acceptedTerms // 👈 THIS WAS MISSING
+          phone: formData.phone, 
+          amount: totalPrice,
+          userId: user.id, 
+          customerName: formData.fullName,
+          customerEmail: formData.email,
+          eventId,
+          tickets: selectedTickets,
+          acceptedTerms: formData.acceptedTerms
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-        {
-          to_name: formData.fullName,
-          to_email: formData.email,
-          event_title: eventDetails.title,
-          event_date: new Date(eventDetails.date).toLocaleDateString('en-KE', { 
-              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-          }),
-          location: eventDetails.location,
-          ticket_details: ticketSummary,
-          total_price: totalPrice.toLocaleString(),
-          order_id: Math.random().toString(36).substr(2, 9).toUpperCase()
-        },
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-      ).catch(e => console.error("Email failed:", e));
 
-      toast.success("Booking Confirmed!", { id: toastId });
-      
-      setTicketData({ 
-        ...formData, 
-        movie: eventDetails.title, 
-        price: totalPrice, 
-        quantity: totalTickets,
-        row: Object.keys(selectedTickets).map(id => eventDetails.tiers.find(t => t.id === id).name).join(', '),
-        date: new Date(eventDetails.date).toLocaleDateString() 
-      });
+      const checkoutRequestID = mpesaRes.data.CheckoutRequestID;
+      toast.loading("Please enter your M-Pesa PIN on your phone...", { id: toastId });
+
+      const startTime = Date.now();
+      const timeoutLimit = 60000; 
+
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await axios.get(`${API_URL}/api/v1/mpesa/status/${checkoutRequestID}`);
+          const currentStatus = statusRes.data.status;
+
+          if (currentStatus === 'success') {
+            clearInterval(pollInterval);
+            toast.success("Payment Confirmed!", { id: toastId });
+
+            const ticketSummary = Object.entries(selectedTickets)
+              .filter(([_, qty]) => qty > 0)
+              .map(([tierId, qty]) => {
+                const tier = eventDetails.tiers.find(t => t.id === tierId);
+                return `${qty}x ${tier.name}`;
+              })
+              .join(', ');
+
+            emailjs.send(
+              import.meta.env.VITE_EMAILJS_SERVICE_ID,
+              import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+              {
+                to_name: formData.fullName,
+                to_email: formData.email,
+                event_title: eventDetails.title,
+                event_date: new Date(eventDetails.date).toLocaleDateString('en-KE', { 
+                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+                }),
+                location: eventDetails.location,
+                ticket_details: ticketSummary,
+                total_price: totalPrice.toLocaleString(),
+                order_id: checkoutRequestID.slice(-8).toUpperCase()
+              },
+              import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+            ).catch(e => console.error("Email failed:", e));
+
+            setTicketData({ 
+              ...formData, 
+              movie: eventDetails.title, 
+              price: totalPrice, 
+              quantity: totalTickets,
+              row: Object.keys(selectedTickets).map(id => eventDetails.tiers.find(t => t.id === id).name).join(', '),
+              date: new Date(eventDetails.date).toLocaleDateString(),
+              mpesaReceipt: statusRes.data.mpesaReceipt 
+            });
+
+            setIsBooking(false);
+
+          } else if (currentStatus === 'failed' || currentStatus === 'expired') {
+            clearInterval(pollInterval);
+            setIsBooking(false);
+            const errorMessage = currentStatus === 'expired' ? "Payment timed out" : "Payment failed or was cancelled";
+            toast.error(errorMessage, { id: toastId });
+          }
+
+          if (Date.now() - startTime > timeoutLimit) {
+            clearInterval(pollInterval);
+            if (isBooking) {
+              setIsBooking(false);
+              toast.error("Payment session timed out. Try again.", { id: toastId });
+            }
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 3000);
 
     } catch (error) {
-      // This will now catch the 400 error and show the message from your backend
       toast.error(error.response?.data?.message || "Booking failed", { id: toastId });
-    } finally {
       setIsBooking(false);
     }
   };
