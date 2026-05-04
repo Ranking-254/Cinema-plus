@@ -1,14 +1,39 @@
 name: Keep MongoDB Atlas Alive
 on:
   schedule:
-    - cron: "0 0 1,15 * *" # Runs on the 1st and 15th of every month
-  workflow_dispatch: # Allows manual testing
+    - cron: "0 0 1,15 * *"
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install MongoDB Driver
+        run: npm install mongodb
+
       - name: Ping MongoDB
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
-          # Use mongosh (pre-installed on GitHub runners) to run a simple command
-          mongosh "${{ secrets.MONGODB_URI }}" --eval "db.adminCommand({ ping: 1 })"
+          node -e "
+          const { MongoClient } = require('mongodb');
+          async function run() {
+            const client = new MongoClient(process.env.MONGODB_URI);
+            try {
+              await client.connect();
+              await client.db('admin').command({ ping: 1 });
+              console.log('Ping successful!');
+            } finally {
+              await client.close();
+            }
+          }
+          run().catch(console.dir);
+          "
